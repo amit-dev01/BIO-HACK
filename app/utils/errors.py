@@ -136,6 +136,22 @@ class InternalServiceError(CanopyAIException):
         )
 
 
+class DatabaseError(CanopyAIException):
+    """Raised when a persistence or database query operation fails."""
+
+    def __init__(
+        self,
+        message: str = "A database error occurred while processing the request",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="database_error",
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details=details,
+        )
+
+
 # --- Centralized FastAPI Exception Handlers ---
 
 

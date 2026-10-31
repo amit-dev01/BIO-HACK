@@ -139,6 +139,17 @@ class InMemoryAnalysisRepository:
             page_items = sorted_items[start:end]
             return page_items, total
 
+    def list_offset(self, limit: int = 20, offset: int = 0) -> Tuple[List[AnalysisResponse], int]:
+        """Retrieve a slice of stored analyses using limit and offset, newest first."""
+        with self._lock:
+            sorted_items = sorted(
+                self._storage.values(),
+                key=lambda a: a.timestamp,
+                reverse=True,
+            )
+            total = len(sorted_items)
+            return sorted_items[offset : offset + limit], total
+
     def count(self) -> int:
         """Count total stored analyses."""
         with self._lock:

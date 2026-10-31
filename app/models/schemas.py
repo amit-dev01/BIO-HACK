@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+import math
 from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
@@ -137,14 +138,41 @@ class AnalysisResponse(BaseModel):
     )
 
 
-class PaginatedAnalysisResponse(BaseModel):
-    """Paginated list of previous forest analyses."""
+class AnalysisSummary(BaseModel):
+    """Summary record for analysis history listings."""
 
-    items: List[AnalysisResponse] = Field(..., description="List of completed analyses for the current page")
+    analysis_id: str = Field(..., description="Unique analysis execution identifier")
+    timestamp: datetime = Field(..., description="Timestamp of analysis creation (UTC ISO 8601)")
+    area_ha: float = Field(..., description="Evaluated forest area in hectares")
+    total_co2e: Optional[float] = Field(None, description="Estimated total carbon dioxide equivalent in tonnes")
+    forest_type: Optional[str] = Field(None, description="Dominant forest classification type")
+    confidence_score: Optional[int] = Field(None, description="Model confidence score as integer between 0 and 100")
+    status: str = Field(default="complete", description="Analysis execution status: 'complete' or 'failed'")
+
+
+class PaginatedAnalysisResponse(BaseModel):
+    """Paginated response containing list of analysis summaries."""
+
     total: int = Field(..., description="Total count of recorded analyses")
-    page: int = Field(..., description="Current page number (1-indexed)")
     limit: int = Field(..., description="Page limit / size")
-    total_pages: int = Field(..., description="Total number of pages available")
+    offset: int = Field(default=0, description="Offset / starting index (0-indexed)")
+    analyses: List[AnalysisSummary] = Field(default_factory=list, description="List of analysis summaries")
+
+    # Backward compatibility attributes for Phase 1 API consumers
+    items: Optional[List[Any]] = Field(default=None, description="Backward compatible alias for analyses")
+    page: Optional[int] = Field(default=1, description="Page number (1-indexed)")
+    total_pages: Optional[int] = Field(default=1, description="Total number of pages available")
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.items is None:
+            self.items = self.analyses
+        if self.limit > 0:
+            if self.page is None or self.page == 1:
+                self.page = (self.offset // self.limit) + 1
+            self.total_pages = max(1, math.ceil(self.total / self.limit)) if self.total > 0 else 1
+
+
+AnalysisHistoryResponse = PaginatedAnalysisResponse
 
 
 class HealthResponse(BaseModel):

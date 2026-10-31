@@ -37,12 +37,38 @@ CanopyAI estimates forest biomass and carbon storage using satellite observation
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Backend operational status, version, server timestamp, and mock mode status |
-| `POST` | `/api/analyze` | Submit GeoJSON Polygon and analysis configuration to compute biomass and carbon estimates |
-| `GET` | `/api/analyze/{analysis_id}` | Retrieve previously computed analysis by unique ID |
-| `GET` | `/api/analyses` | Paginated list of session analyses (`?page=1&limit=10`) |
+| `POST` | `/api/analyze` | Submit GeoJSON Polygon and analysis configuration to compute biomass and carbon estimates (persisted to Supabase) |
+| `GET` | `/api/analyze/{analysis_id}` | Retrieve previously computed analysis by unique ID from Supabase |
+| `GET` | `/api/analyses` | Paginated list of analyses (`?limit=20&offset=0`) ordered by creation date, newest first |
 | `GET` | `/api/reports/{analysis_id}/download` | Download summary PDF report for an analysis |
 | `GET` | `/docs` | Interactive Swagger API documentation |
 | `GET` | `/redoc` | Interactive ReDoc documentation |
+
+---
+
+## Phase 2: Supabase Persistence & Database Design
+
+Analyses are persisted in PostgreSQL via Supabase in the `analyses` table:
+
+```sql
+CREATE TABLE IF NOT EXISTS public.analyses (
+    analysis_id TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    polygon_geojson JSONB NOT NULL,
+    area_ha DOUBLE PRECISION NOT NULL,
+    forest_type TEXT,
+    total_co2e DOUBLE PRECISION,
+    confidence_score INTEGER CHECK (confidence_score >= 0 AND confidence_score <= 100),
+    data_mode TEXT NOT NULL CHECK (data_mode IN ('mock', 'satellite')),
+    full_response JSONB NOT NULL,
+    status TEXT NOT NULL DEFAULT 'complete' CHECK (status IN ('complete', 'failed'))
+);
+```
+
+### Mock Mode & Fallback Strategy
+- **Without Supabase**: If `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` are unset, the service automatically runs in mock mode with an in-memory repository.
+- **With Supabase**: When credentials are provided, analyses are persisted directly into Supabase and marked with `data_mode="mock"` (or `"satellite"` in production).
+- Complete responses are preserved in `full_response` without field truncation.
 
 ---
 

@@ -1,5 +1,6 @@
 """Forest biomass and carbon analysis API endpoints."""
 
+from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from app.models.schemas import (
     AnalysisRequest,
@@ -58,16 +59,17 @@ async def get_analysis_by_id(
 @router.get(
     "/analyses",
     response_model=PaginatedAnalysisResponse,
-    summary="List Analyses (Paginated)",
-    description="Retrieve a paginated list of all forest analyses recorded during the active session.",
+    summary="List Analyses History (Paginated)",
+    description="Retrieve a paginated list of all forest analyses recorded in Supabase or session memory, sorted newest first.",
     responses={
         200: {"model": PaginatedAnalysisResponse, "description": "Paginated list of analyses"},
     },
 )
 async def list_analyses(
-    page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
-    limit: int = Query(default=10, ge=1, le=100, description="Number of items per page"),
+    limit: int = Query(default=20, ge=1, le=100, description="Number of items per page (max: 100)"),
+    offset: int = Query(default=0, ge=0, description="Offset index (0-indexed)"),
+    page: Optional[int] = Query(default=None, ge=1, description="Optional page number (1-indexed, for backward compatibility)"),
     service: AnalysisService = Depends(lambda: analysis_service),
 ) -> PaginatedAnalysisResponse:
     """List historical analyses with pagination."""
-    return service.list_analyses(page=page, limit=limit)
+    return service.list_analyses(limit=limit, offset=offset, page=page)

@@ -45,11 +45,17 @@ class Settings(BaseSettings):
         description="Maximum allowable polygon area in hectares (default: 200,000 ha)",
     )
 
-    # External services (optional for mock mode, required for production satellite pipelines)
+    # External services (optional for mock mode, required for persistent Supabase storage)
     supabase_url: Optional[str] = Field(default=None, description="Supabase project URL")
-    supabase_key: Optional[str] = Field(default=None, description="Supabase service role or anon key")
+    supabase_service_key: Optional[str] = Field(default=None, description="Supabase service role key (backend-only)")
+    supabase_key: Optional[str] = Field(default=None, description="Supabase anon or fallback key")
     earth_engine_service_account: Optional[str] = Field(default=None, description="Google Earth Engine service account")
     earth_engine_private_key: Optional[str] = Field(default=None, description="Google Earth Engine private key")
+
+    @property
+    def effective_supabase_key(self) -> Optional[str]:
+        """Return the active Supabase key, prioritizing the service role key."""
+        return self.supabase_service_key or self.supabase_key
 
     model_config = SettingsConfigDict(
         env_file=".env",

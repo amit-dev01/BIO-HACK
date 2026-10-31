@@ -14,6 +14,7 @@ from app.models.schemas import (
     GeoJSONPolygon,
     PaginatedAnalysisResponse,
 )
+from app.services.database_service import DatabaseService, database_service
 from app.services.mock_service import (
     MockAnalysisService,
     calculate_polygon_area_ha,
@@ -41,7 +42,7 @@ class AnalysisService:
     7. Calculate carbon stock (Dev 1 module)
     8. Evaluate data quality & confidence
     9. Assemble analysis response
-    10. Save analysis to persistence repository
+    10. Save analysis to Supabase persistence repository
     11. Return response
     """
 
@@ -49,9 +50,11 @@ class AnalysisService:
         self,
         settings: Optional[Settings] = None,
         mock_service: Optional[MockAnalysisService] = None,
+        db_service: Optional[DatabaseService] = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.mock_service = mock_service or MockAnalysisService(repository=mock_repository)
+        self.database_service = db_service or database_service
 
     def validate_polygon_geometry(self, polygon: GeoJSONPolygon) -> None:
         """Validate geometric properties of the GeoJSON polygon.
@@ -114,45 +117,63 @@ class AnalysisService:
         # 4. Calculate area and validate against bounds
         area_ha = self.calculate_and_validate_area(request.polygon)
 
-        # 5-11. Execution dispatch
+        # 5-9. Execution dispatch
         if self.settings.mock_mode:
             # Delegate to mock service for simulated pipeline
-            return self.mock_service.generate_analysis(request, computed_area_ha=area_ha)
+            analysis = self.mock_service.generate_analysis(request, computed_area_ha=area_ha)
+        else:
+            # Live satellite path: designed for Developer 1 integration
+            try:
+                # Future integration hook:
+                # from app.core.satellite import fetch_satellite_data
+                # from app.core.biomass import calculate_forest_biomass
+                # ...
+                raise NotImplementedError("Developer 1 satellite pipeline is not yet attached")
+            except (ImportError, NotImplementedError):
+                raise SatelliteUnavailableError(
+                    message="Live satellite pipeline is undergoing integration. Please run in mock mode (MOCK_MODE=True)."
+                )
 
-        # Live satellite path: designed for Developer 1 integration
-        try:
-            # Future integration hook:
-            # from app.core.satellite import fetch_satellite_data
-            # from app.core.biomass import calculate_forest_biomass
-            # ...
-            raise NotImplementedError("Developer 1 satellite pipeline is not yet attached")
-        except (ImportError, NotImplementedError):
-            raise SatelliteUnavailableError(
-                message="Live satellite pipeline is undergoing integration. Please run in mock mode (MOCK_MODE=True)."
-            )
+        # 10. Save analysis to persistence repository (Supabase with in-memory fallback)
+        saved_analysis = self.database_service.save_analysis(analysis)
+
+        # 11. Return response
+        return saved_analysis
 
     def get_analysis_by_id(self, analysis_id: str) -> AnalysisResponse:
         """Retrieve a previously generated analysis by its unique ID."""
-        analysis = self.mock_service.repository.get_by_id(analysis_id)
+        analysis = self.database_service.get_analysis_by_id(analysis_id)
         if not analysis:
             raise AnalysisNotFoundError(analysis_id=analysis_id)
         return analysis
 
-    def list_analyses(self, page: int = 1, limit: int = 10) -> PaginatedAnalysisResponse:
+    def list_analyses(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        page: Optional[int] = None,
+    ) -> PaginatedAnalysisResponse:
         """Retrieve paginated analyses recorded in the system."""
-        if page < 1:
-            page = 1
-        if limit < 1 or limit > 100:
-            limit = 10
+        limit = max(1, min(100, limit))
 
-        items, total = self.mock_service.repository.list(page=page, limit=limit)
-        total_pages = math.ceil(total / limit) if total > 0 else 1
+        if page is not None and offset == 0:
+            actual_offset = max(0, (page - 1) * limit)
+        else:
+            actual_offset = max(0, offset)
+
+        summaries = self.database_service.list_analyses(limit=limit, offset=actual_offset)
+        total = self.database_service.count_analyses()
+
+        computed_page = (actual_offset // limit) + 1
+        total_pages = max(1, math.ceil(total / limit)) if total > 0 else 1
 
         return PaginatedAnalysisResponse(
-            items=items,
             total=total,
-            page=page,
             limit=limit,
+            offset=actual_offset,
+            analyses=summaries,
+            items=summaries,
+            page=computed_page,
             total_pages=total_pages,
         )
 
