@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     earth_engine_service_account: Optional[str] = Field(default=None, description="Google Earth Engine service account")
     earth_engine_private_key: Optional[str] = Field(default=None, description="Google Earth Engine private key")
 
+    # PDF Report generation settings
+    pdf_report_title: str = Field(default="CanopyAI Forest Carbon Assessment", description="Title for PDF reports")
+    pdf_primary_color: str = Field(default="#1B5E20", description="Primary brand color for PDF reports (RGB: 27, 94, 32)")
+    pdf_page_size: str = Field(default="A4", description="Page size standard for reports")
+
     @property
     def effective_supabase_key(self) -> Optional[str]:
         """Return the active Supabase key, prioritizing the service role key."""
