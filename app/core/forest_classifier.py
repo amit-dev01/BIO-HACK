@@ -77,17 +77,19 @@ def _check_spans_multiple_ecoregions(min_lat: float, max_lat: float) -> bool:
 def classify_forest_type(
     polygon: Any,
     mean_ndvi: float | None = None,
+    landcover_fractions: dict[str, float] | None = None,
 ) -> ForestClassificationResult:
     """Classify the dominant forest biome/type using satellite and ecological heuristics.
 
     Inputs evaluated in order of priority:
-      - Priority 1: ESA WorldCover (ESA/WorldCover/v200) dominant land cover class
+      - Priority 1: Dynamic World / ESA WorldCover dominant land cover class & fractions
       - Priority 2: Centroid latitude-based ecozone sub-classification
       - Priority 3: Sentinel-2 mean NDVI cross-validation
 
     Args:
         polygon: GeoJSON Polygon dict, Feature dict, Shapely Polygon, or coordinates.
         mean_ndvi: Optional mean NDVI value from Sentinel-2 for cross-validation.
+        landcover_fractions: Optional mapping of Dynamic World class names to coverage percentages.
 
     Returns:
         ForestClassificationResult containing:
@@ -111,6 +113,64 @@ def classify_forest_type(
     poly = parse_polygon(polygon)
     _lon, lat = get_centroid(poly)
     _minx, miny, _maxx, maxy = get_bounding_box(poly)
+
+    # ------------------------------------------------------------------------
+    # Edge Cases Evaluated via Land Cover Fractions (Phase 4)
+    # ------------------------------------------------------------------------
+    is_mixed = False
+    if landcover_fractions:
+        water_pct = landcover_fractions.get("water", 0.0)
+        built_pct = landcover_fractions.get("built", 0.0)
+        bare_pct = landcover_fractions.get("bare", 0.0)
+        crops_pct = landcover_fractions.get("crops", 0.0)
+
+        # 6.1 Ocean / Water: > 80% water OR (>50% water with negative NDVI)
+        if water_pct > 80.0 or (mean_ndvi is not None and mean_ndvi < 0.0 and water_pct > 50.0):
+            return ForestClassificationResult({
+                "forest_type": "Non-Forest",
+                "ecoregion": "Non-Forest",
+                "dominant_land_cover": "Water",
+                "classification_method": "satellite+latitude",
+                "classification_confidence": "high",
+                "recommended_standard": None,
+            })
+
+        # 6.2 Urban: > 50% built area
+        if built_pct > 50.0:
+            return ForestClassificationResult({
+                "forest_type": "Non-Forest",
+                "ecoregion": "Non-Forest",
+                "dominant_land_cover": "Built area",
+                "classification_method": "satellite+latitude",
+                "classification_confidence": "high",
+                "recommended_standard": None,
+            })
+
+        # 6.3 Desert / Bare ground: > 60% bare ground and NDVI < 0.15
+        if bare_pct > 60.0 and (mean_ndvi is None or mean_ndvi < 0.15):
+            return ForestClassificationResult({
+                "forest_type": "Non-Forest",
+                "ecoregion": "Non-Forest",
+                "dominant_land_cover": "Bare ground",
+                "classification_method": "satellite+latitude",
+                "classification_confidence": "high",
+                "recommended_standard": None,
+            })
+
+        # 6.4 Agricultural / Cropland: > 50% crops
+        if crops_pct > 50.0:
+            return ForestClassificationResult({
+                "forest_type": "Non-Forest",
+                "ecoregion": "Non-Forest",
+                "dominant_land_cover": "Crops",
+                "classification_method": "satellite+latitude",
+                "classification_confidence": "high",
+                "recommended_standard": None,
+            })
+
+        # 6.5 Mixed ecosystems: no single class > 40%
+        if all(pct <= 40.0 for pct in landcover_fractions.values()):
+            is_mixed = True
 
     spans_multiple = _check_spans_multiple_ecoregions(miny, maxy)
 
@@ -220,12 +280,15 @@ def classify_forest_type(
     ):
         ndvi_contradicts = True
 
-    if ndvi_contradicts:
-        logger.warning(
-            "NDVI value (%.4f) contradicts latitude-based classification for %s.",
-            mean_ndvi,
-            forest_type,
-        )
+    if ndvi_contradicts or is_mixed:
+        if ndvi_contradicts:
+            logger.warning(
+                "NDVI value (%.4f) contradicts latitude-based classification for %s.",
+                mean_ndvi,
+                forest_type,
+            )
+        if is_mixed:
+            logger.info("Polygon spans mixed ecosystems with no single dominant class > 40%%.")
         classification_confidence = "low"
     elif spans_multiple:
         logger.info("Polygon spans multiple ecoregions; assigned %s based on centroid.", forest_type)

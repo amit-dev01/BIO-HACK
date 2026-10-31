@@ -255,3 +255,128 @@ def assess_confidence(
         classification_probability=merged_params.get("classification_probability"),
         missing_data_pct=merged_params.get("missing_data_pct"),
     )
+
+
+def calculate_confidence_score(
+    observations_or_data: Mapping[str, Any] | None = None,
+    area_ha: float | None = None,
+    **kwargs: Any,
+) -> ConfidenceResult:
+    """Assess overall data quality and calculate confidence score (0-100) and grade.
+
+    Applies Phase 4 uncertainty rules:
+      - Evaluates GEDI footprint sampling density (<5: high penalty, 5-20: moderate penalty)
+      - Coefficient of variation (CV = stddev / mean > 0.5) penalizes high heterogenity
+      - Cloud cover > 30% reduces confidence
+      - Area adjustments: 10-50 ha reduces score by 10; > 50,000 ha reduces score by 5
+      - Low classification confidence reduces score by 15
+      - Water/ocean or complete data failure produces score 0 ("Low")
+
+    Labelled clearly as a data quality indicator rather than a formal statistical CI.
+    """
+    merged: dict[str, Any] = {}
+    if observations_or_data is not None:
+        merged.update(observations_or_data)
+    merged.update(kwargs)
+
+    # Detect complete data failure or ocean
+    data_warnings = merged.get("data_warnings", [])
+    forest_type = merged.get("forest_type")
+    is_water = (
+        forest_type == "Non-Forest"
+        and any("water" in str(w).lower() for w in data_warnings)
+    )
+    all_nulls = (
+        merged.get("agb_t_per_ha") is None
+        and merged.get("mean_ndvi") is None
+        and merged.get("canopy_cover_pct") is None
+        and merged.get("mean_canopy_height_m") is None
+    )
+    if is_water or (all_nulls and "gedi_shot_count" not in merged):
+        return {
+            "confidence_score": 0,
+            "confidence_label": "Low",
+            "confidence_interval_pct": None,
+        }
+
+    # Extract parameters for standard calculate_confidence
+    gedi_count = (
+        merged.get("gedi_observation_count")
+        or merged.get("valid_gedi_biomass_count")
+        or merged.get("gedi_shot_count")
+    )
+    agb_mean = merged.get("agb_t_per_ha")
+    stddev = (
+        merged.get("agb_stddev")
+        or merged.get("biomass_uncertainty_se")
+    )
+    cloud_cov = (
+        merged.get("validation_summary", {}).get("cloud_masked_pixel_pct")
+        if isinstance(merged.get("validation_summary"), dict)
+        else merged.get("cloud_cover_pct")
+    )
+    if cloud_cov is None and merged.get("valid_pixel_percentage") is not None:
+        cloud_cov = max(0.0, 100.0 - float(merged["valid_pixel_percentage"]))
+
+    class_prob = merged.get("classification_probability")
+    class_conf = merged.get("classification_confidence")
+    if class_prob is None and class_conf:
+        class_prob = 0.90 if class_conf == "high" else (0.60 if class_conf == "medium" else 0.30)
+
+    missing_pct = merged.get("missing_data_pct")
+
+    # Baseline score calculation
+    base_res = calculate_confidence(
+        gedi_shot_count=gedi_count,
+        gedi_coverage_pct=merged.get("gedi_coverage_pct"),
+        biomass_uncertainty_se=stddev,
+        agb_t_per_ha=agb_mean,
+        cloud_cover_pct=cloud_cov,
+        classification_probability=class_prob,
+        missing_data_pct=missing_pct,
+    )
+
+    score = base_res["confidence_score"]
+
+    # Phase 4 adjustments:
+    # A. GEDI Sampling adequacy penalty
+    if gedi_count is not None and gedi_count < 5:
+        score -= 15
+    elif gedi_count is not None and gedi_count < 20:
+        score -= 5
+
+    # B. High variance penalty (CV > 0.5)
+    if agb_mean and stddev and agb_mean > 0:
+        cv = stddev / agb_mean
+        if cv > 0.5:
+            score -= 10
+
+    # C. Cloud contamination penalty (> 30% clouds)
+    if cloud_cov is not None and cloud_cov > 30.0:
+        score -= 10
+
+    # D. Area adjustments
+    eval_area = area_ha or merged.get("area_ha")
+    if eval_area is not None:
+        if 10.0 <= eval_area <= 50.0:
+            score -= 10
+        elif eval_area > 50_000.0:
+            score -= 5
+
+    # E. Classification uncertainty
+    if class_conf == "low":
+        score -= 15
+
+    final_score = max(0, min(100, score))
+    if final_score >= 75:
+        final_label = "High"
+    elif final_score >= 50:
+        final_label = "Medium"
+    else:
+        final_label = "Low"
+
+    return {
+        "confidence_score": final_score,
+        "confidence_label": final_label,
+        "confidence_interval_pct": base_res["confidence_interval_pct"],
+    }

@@ -19,6 +19,7 @@ DEFAULT_ROOT_TO_SHOOT_RATIOS: dict[str, float] = {
     "Tropical Moist Broadleaf": 0.21,
     "Temperate Broadleaf": 0.26,
     "Boreal Coniferous": 0.24,
+    "Non-Forest": 0.0,
     "Other": 0.23,
 }
 
