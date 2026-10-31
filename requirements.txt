@@ -14,3 +14,4 @@ supabase>=2.3.0
 earthengine-api>=1.7.0
 psutil>=5.9.0
 sentry-sdk[fastapi]>=2.0.0
+PyPDF2>=3.0.0
