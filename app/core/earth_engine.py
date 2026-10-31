@@ -1,11 +1,13 @@
 """Google Earth Engine (GEE) satellite data processing module for CanopyAI.
 
-Phase 2 Satellite Remote Sensing Pipeline:
+Phase 2 & Phase 3 Satellite Remote Sensing Pipeline:
 - Authentication & initialization via Google Service Account.
 - NASA GEDI Level 4A (LARSE/GEDI/GEDI04_A_002) for Aboveground Biomass Density (AGBD in Mg/ha = t/ha).
 - NASA GEDI Level 2A (LARSE/GEDI/GEDI02_A_002_MONTHLY) for Canopy Top Height (RH98 in meters).
 - ESA Sentinel-2 Harmonized (COPERNICUS/S2_SR_HARMONIZED) for surface reflectance,
   pixel-level cloud and shadow masking (SCL + QA60), NDVI, and 5-year quarterly health trends.
+- Google Dynamic World (GOOGLE/DYNAMICWORLD/V1) for 10m pixel-level tree canopy cover detection.
+- Multi-factor forest type and terrestrial ecoregion classification (via ESA WorldCover v200).
 
 Scientific Integrity Guardrails:
 - GEDI observations are sampled footprints, not total tree counts.
@@ -32,11 +34,15 @@ logger = logging.getLogger("canopyai.earth_engine")
 GEDI_L4A_COLLECTION: str = "LARSE/GEDI/GEDI04_A_002"
 GEDI_L2A_COLLECTION: str = "LARSE/GEDI/GEDI02_A_002_MONTHLY"
 SENTINEL_2_COLLECTION: str = "COPERNICUS/S2_SR_HARMONIZED"
+DYNAMIC_WORLD_COLLECTION: str = "GOOGLE/DYNAMICWORLD/V1"
+WORLDCOVER_COLLECTION: str = "ESA/WorldCover/v200"
 
 DATA_SOURCES: list[str] = [
     GEDI_L4A_COLLECTION,
     GEDI_L2A_COLLECTION,
     SENTINEL_2_COLLECTION,
+    DYNAMIC_WORLD_COLLECTION,
+    WORLDCOVER_COLLECTION,
 ]
 
 # Module-level state tracking initialization status
@@ -229,7 +235,18 @@ def get_gedi_biomass(polygon: Any, raise_on_error: bool = False) -> dict[str, An
           - gedi_observation_count: Valid footprint count (int)
           - gedi_data_available: Boolean indicating presence of valid footprints
     """
-    _ensure_initialized()
+    try:
+        _ensure_initialized()
+    except Exception as init_exc:
+        logger.warning("Earth Engine initialization check failed in get_gedi_biomass: %s", init_exc)
+        if raise_on_error:
+            raise
+        return {
+            "agb_t_per_ha": None,
+            "agb_stddev": None,
+            "gedi_observation_count": 0,
+            "gedi_data_available": False,
+        }
 
     try:
         try:
@@ -246,6 +263,7 @@ def get_gedi_biomass(polygon: Any, raise_on_error: bool = False) -> dict[str, An
                 "gedi_observation_count": 0,
                 "gedi_data_available": False,
             }
+
         collection = ee.FeatureCollection(GEDI_L4A_COLLECTION)
         filtered = (
             collection
@@ -340,7 +358,17 @@ def get_gedi_canopy_height(polygon: Any, raise_on_error: bool = False) -> dict[s
           - height_observation_count: Valid observed pixels count (int)
           - height_data_available: Boolean indicating presence of valid height data
     """
-    _ensure_initialized()
+    try:
+        _ensure_initialized()
+    except Exception as init_exc:
+        logger.warning("Earth Engine initialization check failed in get_gedi_canopy_height: %s", init_exc)
+        if raise_on_error:
+            raise
+        return {
+            "mean_canopy_height_m": None,
+            "height_observation_count": 0,
+            "height_data_available": False,
+        }
 
     try:
         try:
@@ -356,9 +384,9 @@ def get_gedi_canopy_height(polygon: Any, raise_on_error: bool = False) -> dict[s
                 "height_observation_count": 0,
                 "height_data_available": False,
             }
+
         collection = ee.ImageCollection(GEDI_L2A_COLLECTION).filterBounds(ee_geom)
 
-        # Check if any images exist in region
         col_size = int(collection.size().getInfo())
         if col_size <= 0:
             return {
@@ -487,15 +515,26 @@ def get_sentinel_ndvi(
           - analysis_start_date: Start date string
           - analysis_end_date: End date string
     """
-    _ensure_initialized()
-
-    # Establish analysis temporal window (defaulting to the latest 12 months)
     now_utc = datetime.now(timezone.utc)
     if not end_date:
         end_date = now_utc.strftime("%Y-%m-%d")
     if not start_date:
         start_year = now_utc.year - 1
         start_date = f"{start_year}-{now_utc.strftime('%m-%d')}"
+
+    try:
+        _ensure_initialized()
+    except Exception as init_exc:
+        logger.warning("Earth Engine initialization check failed in get_sentinel_ndvi: %s", init_exc)
+        if raise_on_error:
+            raise
+        return {
+            "mean_ndvi": None,
+            "valid_pixel_percentage": 0.0,
+            "image_count": 0,
+            "analysis_start_date": start_date,
+            "analysis_end_date": end_date,
+        }
 
     try:
         try:
@@ -646,8 +685,6 @@ def get_ndvi_trend(
     Returns:
         List of 20 observation dictionaries [{'quarter': 'YYYY-QX', 'ndvi': float | None}, ...]
     """
-    _ensure_initialized()
-
     if years is None:
         years = get_recent_complete_years(count=5)
 
@@ -655,8 +692,20 @@ def get_ndvi_trend(
         ("Q1", "01-01", "04-01"),
         ("Q2", "04-01", "07-01"),
         ("Q3", "07-01", "10-01"),
-        ("Q4", "10-01", "01-01"),  # Ends on next year's Jan 01
+        ("Q4", "10-01", "01-01"),
     ]
+
+    try:
+        _ensure_initialized()
+    except Exception as init_exc:
+        logger.warning("Earth Engine initialization check failed in get_ndvi_trend: %s", init_exc)
+        if raise_on_error:
+            raise
+        fallback = []
+        for y in years:
+            for q_name, _, _ in quarter_definitions:
+                fallback.append({"quarter": f"{y}-{q_name}", "ndvi": None})
+        return fallback
 
     results: list[dict[str, Any]] = []
 
@@ -736,7 +785,141 @@ def get_ndvi_trend(
 
 
 # ============================================================================
-# 7. Combined Structured Satellite Observations
+# 7. Google Dynamic World Canopy Cover Detection
+# ============================================================================
+
+
+def get_canopy_cover(
+    polygon: Any,
+    year: int | None = None,
+    raise_on_error: bool = False,
+) -> dict[str, Any]:
+    """Estimate the percentage of the polygon area covered by tree canopy using Dynamic World.
+
+    Dataset:
+        Google Dynamic World (GOOGLE/DYNAMICWORLD/V1)
+        Class Mapping: 1 = Trees (canopy), all other classes (0, 2-9) = non-canopy.
+        Resolution: 10 meters
+
+    Temporal Filtering:
+        Uses the most recent complete calendar year by default.
+
+    Returns:
+        Dictionary containing:
+          - canopy_cover_pct: Float between 0.0 and 100.0 (rounded to 1 decimal place) or None
+          - canopy_data_available: Boolean indicating presence of valid satellite data
+          - canopy_pixel_count: Integer count of valid pixels analyzed
+    """
+    if polygon is None:
+        raise TypeError("Polygon input cannot be None.")
+
+    try:
+        ee_geom = polygon_to_ee_geometry(polygon)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:
+        logger.warning("Failed converting polygon to Earth Engine geometry: %s", exc)
+        if raise_on_error:
+            raise
+        return {
+            "canopy_cover_pct": None,
+            "canopy_data_available": False,
+            "canopy_pixel_count": 0,
+        }
+
+    try:
+        _ensure_initialized()
+    except Exception as init_exc:
+        logger.warning("Earth Engine initialization check failed in get_canopy_cover: %s", init_exc)
+        if raise_on_error:
+            raise
+        return {
+            "canopy_cover_pct": None,
+            "canopy_data_available": False,
+            "canopy_pixel_count": 0,
+        }
+
+    if year is None:
+        year = get_recent_complete_years(1)[0]
+    start_date = f"{year}-01-01"
+    end_date = f"{year + 1}-01-01"
+
+    try:
+        collection = (
+            ee.ImageCollection(DYNAMIC_WORLD_COLLECTION)
+            .filterBounds(ee_geom)
+            .filterDate(start_date, end_date)
+        )
+
+        col_size = int(collection.size().getInfo())
+        if col_size <= 0:
+            return {
+                "canopy_cover_pct": None,
+                "canopy_data_available": False,
+                "canopy_pixel_count": 0,
+            }
+
+        # Select 'label' band, aggregate over time via mode, and create binary tree mask (Trees == 1)
+        labels = collection.select("label")
+        mode_label = labels.reduce(ee.Reducer.mode())
+        tree_binary = mode_label.eq(1).rename("trees")
+
+        reducer = ee.Reducer.mean().combine(
+            reducer2=ee.Reducer.count(),
+            outputPrefix="",
+            sharedInputs=True,
+        )
+
+        stats = tree_binary.reduceRegion(
+            reducer=reducer,
+            geometry=ee_geom,
+            scale=10,
+            maxPixels=100_000_000,
+        ).getInfo()
+
+        if not stats:
+            return {
+                "canopy_cover_pct": None,
+                "canopy_data_available": False,
+                "canopy_pixel_count": 0,
+            }
+
+        mean_val = stats.get("trees_mean", stats.get("mean"))
+        pixel_count = int(stats.get("trees_count", stats.get("count", 0)) or 0)
+
+        if (
+            pixel_count <= 0
+            or mean_val is None
+            or (isinstance(mean_val, float) and math.isnan(mean_val))
+        ):
+            return {
+                "canopy_cover_pct": None,
+                "canopy_data_available": False,
+                "canopy_pixel_count": 0,
+            }
+
+        # Mean of 0/1 binary mask is fraction of canopy cover; multiply by 100 for percentage
+        canopy_pct = max(0.0, min(100.0, round(float(mean_val) * 100.0, 1)))
+
+        return {
+            "canopy_cover_pct": canopy_pct,
+            "canopy_data_available": True,
+            "canopy_pixel_count": pixel_count,
+        }
+
+    except Exception as exc:
+        logger.warning("Failed to calculate Dynamic World canopy cover: %s", exc)
+        if raise_on_error:
+            raise
+        return {
+            "canopy_cover_pct": None,
+            "canopy_data_available": False,
+            "canopy_pixel_count": 0,
+        }
+
+
+# ============================================================================
+# 8. Combined Structured Satellite Observations
 # ============================================================================
 
 
@@ -748,6 +931,8 @@ def get_satellite_observations(polygon: Any, raise_on_error: bool = False) -> di
       - NASA GEDI L2A Canopy Top Height
       - ESA Sentinel-2 Harmonized NDVI and cloud coverage
       - ESA Sentinel-2 5-Year Quarterly NDVI Vegetation Health Trends
+      - Google Dynamic World Canopy Cover Percentage [Phase 3]
+      - Multi-Factor Forest Type & Ecoregion Classification [Phase 3]
 
     Output Schema (Strict Contract for Developer 2 Integration):
       - agb_t_per_ha: float | None
@@ -761,6 +946,15 @@ def get_satellite_observations(polygon: Any, raise_on_error: bool = False) -> di
       - valid_pixel_percentage: float | None
       - image_count: int
       - ndvi_trend: list[dict[str, Any]]
+      - canopy_cover_pct: float | None
+      - canopy_data_available: bool
+      - canopy_pixel_count: int
+      - forest_type: str
+      - ecoregion: str
+      - dominant_land_cover: str
+      - classification_method: str
+      - classification_confidence: str
+      - recommended_standard: str | None
       - data_sources: list[str]
 
     Args:
@@ -770,6 +964,8 @@ def get_satellite_observations(polygon: Any, raise_on_error: bool = False) -> di
     Returns:
         Structured observation dictionary.
     """
+    from app.core.forest_classifier import classify_forest_type
+
     # 1. GEDI Biomass
     biomass_res = get_gedi_biomass(polygon, raise_on_error=raise_on_error)
 
@@ -781,6 +977,12 @@ def get_satellite_observations(polygon: Any, raise_on_error: bool = False) -> di
 
     # 4. Sentinel-2 5-Year Quarterly NDVI Trend
     trend_res = get_ndvi_trend(polygon, raise_on_error=raise_on_error)
+
+    # 5. Google Dynamic World Canopy Cover [Phase 3]
+    canopy_res = get_canopy_cover(polygon, raise_on_error=raise_on_error)
+
+    # 6. Multi-Factor Forest Classification [Phase 3]
+    classifier_res = classify_forest_type(polygon, mean_ndvi=s2_res.get("mean_ndvi"))
 
     return {
         "agb_t_per_ha": biomass_res["agb_t_per_ha"],
@@ -794,5 +996,14 @@ def get_satellite_observations(polygon: Any, raise_on_error: bool = False) -> di
         "valid_pixel_percentage": s2_res["valid_pixel_percentage"],
         "image_count": s2_res["image_count"],
         "ndvi_trend": trend_res,
+        "canopy_cover_pct": canopy_res["canopy_cover_pct"],
+        "canopy_data_available": canopy_res["canopy_data_available"],
+        "canopy_pixel_count": canopy_res["canopy_pixel_count"],
+        "forest_type": classifier_res["forest_type"],
+        "ecoregion": classifier_res["ecoregion"],
+        "dominant_land_cover": classifier_res["dominant_land_cover"],
+        "classification_method": classifier_res["classification_method"],
+        "classification_confidence": classifier_res["classification_confidence"],
+        "recommended_standard": classifier_res["recommended_standard"],
         "data_sources": DATA_SOURCES,
     }
