@@ -279,12 +279,15 @@ def calculate_confidence_score(
         merged.update(observations_or_data)
     merged.update(kwargs)
 
-    # Detect complete data failure or ocean
+    # Detect complete data failure or non-forest edge cases (water, desert, urban)
     data_warnings = merged.get("data_warnings", [])
     forest_type = merged.get("forest_type")
-    is_water = (
+    is_non_forest_edge = (
         forest_type == "Non-Forest"
-        and any("water" in str(w).lower() for w in data_warnings)
+        and (
+            any(k in str(w).lower() for w in data_warnings for k in ("water", "desert", "bare ground", "urban"))
+            or merged.get("dominant_land_cover") in ("Water", "Bare ground", "Built area")
+        )
     )
     all_nulls = (
         merged.get("agb_t_per_ha") is None
@@ -292,7 +295,7 @@ def calculate_confidence_score(
         and merged.get("canopy_cover_pct") is None
         and merged.get("mean_canopy_height_m") is None
     )
-    if is_water or (all_nulls and "gedi_shot_count" not in merged):
+    if is_non_forest_edge or (all_nulls and "gedi_shot_count" not in merged):
         return {
             "confidence_score": 0,
             "confidence_label": "Low",

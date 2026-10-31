@@ -1,0 +1,301 @@
+[
+  {
+    "id": "amazon_01",
+    "name": "Amazon Rainforest (Primary Terra Firme)",
+    "country": "Brazil",
+    "ecosystem": "Tropical Moist Broadleaf Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-62.21424, -3.41424],
+          [-62.18576, -3.41424],
+          [-62.18576, -3.38576],
+          [-62.21424, -3.38576],
+          [-62.21424, -3.41424]
+        ]
+      ]
+    },
+    "expected_agb_range": [250.0, 350.0],
+    "expected_canopy_cover_range": [85.0, 95.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Saatchi et al. (2011) PNAS; Baccini et al. (2012) Nature Climate Change",
+    "notes": "Intact core Amazonian terra firme evergreen moist broadleaf rainforest in Amazonas state with continuous high canopy."
+  },
+  {
+    "id": "congo_02",
+    "name": "Congo Basin Forest (Lowland Equatorial)",
+    "country": "Democratic Republic of the Congo",
+    "ecosystem": "Tropical Moist Broadleaf Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [23.98576, -0.51424],
+          [24.01424, -0.51424],
+          [24.01424, -0.48576],
+          [23.98576, -0.48576],
+          [23.98576, -0.51424]
+        ]
+      ]
+    },
+    "expected_agb_range": [200.0, 300.0],
+    "expected_canopy_cover_range": [80.0, 95.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Lewis et al. (2013) Nature; Gourlet-Fleury et al. (2011) Forest Ecology and Management",
+    "notes": "Central equatorial Congo Basin dense evergreen forest with structural complexity and high carbon density."
+  },
+  {
+    "id": "borneo_03",
+    "name": "Borneo Dipterocarp Rainforest",
+    "country": "Indonesia",
+    "ecosystem": "Tropical Moist Broadleaf Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [114.48993, 0.48993],
+          [114.51007, 0.48993],
+          [114.51007, 0.51007],
+          [114.48993, 0.51007],
+          [114.48993, 0.48993]
+        ]
+      ]
+    },
+    "expected_agb_range": [300.0, 450.0],
+    "expected_canopy_cover_range": [85.0, 95.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Slik et al. (2013) Global Ecology and Biogeography; Langner et al. (2007)",
+    "notes": "Ancient primary lowland Dipterocarpaceae forest characterized by emergent trees exceeding 50m height."
+  },
+  {
+    "id": "black_forest_04",
+    "name": "Black Forest (Schwarzwald)",
+    "country": "Germany",
+    "ecosystem": "Temperate Broadleaf and Mixed Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [8.18497, 47.98993],
+          [8.21503, 47.98993],
+          [8.21503, 48.01007],
+          [8.18497, 48.01007],
+          [8.18497, 47.98993]
+        ]
+      ]
+    },
+    "expected_agb_range": [150.0, 250.0],
+    "expected_canopy_cover_range": [75.0, 90.0],
+    "expected_forest_type": "Temperate Broadleaf",
+    "reference_source": "Thurner et al. (2014) Global Ecology and Biogeography; German National Forest Inventory (BWI3)",
+    "notes": "Montane mixed temperate forest dominated by silver fir (Abies alba), Norway spruce, and European beech."
+  },
+  {
+    "id": "redwood_05",
+    "name": "Redwood National and State Parks",
+    "country": "United States",
+    "ecosystem": "Temperate Rainforest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-124.01037, 41.2922],
+          [-123.98963, 41.2922],
+          [-123.98963, 41.3078],
+          [-124.01037, 41.3078],
+          [-124.01037, 41.2922]
+        ]
+      ]
+    },
+    "expected_agb_range": [400.0, 800.0],
+    "expected_canopy_cover_range": [85.0, 95.0],
+    "expected_forest_type": "Temperate Broadleaf",
+    "reference_source": "Van Pelt et al. (2016) Forest Ecology and Management; Busing & Fujimori (2005)",
+    "notes": "Coastal temperate rainforest supporting the tallest living trees on Earth with immense biomass per hectare."
+  },
+  {
+    "id": "boreal_finland_06",
+    "name": "Finnish Boreal Taiga (Kainuu)",
+    "country": "Finland",
+    "ecosystem": "Boreal Coniferous Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [26.96738, 63.98576],
+          [27.03262, 63.98576],
+          [27.03262, 64.01424],
+          [26.96738, 64.01424],
+          [26.96738, 63.98576]
+        ]
+      ]
+    },
+    "expected_agb_range": [50.0, 150.0],
+    "expected_canopy_cover_range": [60.0, 80.0],
+    "expected_forest_type": "Boreal Coniferous",
+    "reference_source": "Thurner et al. (2014); Natural Resources Institute Finland (Luke) NFI",
+    "notes": "Mid-boreal coniferous forest dominated by Pinus sylvestris and Picea abies adapted to short growing seasons."
+  },
+  {
+    "id": "siberian_taiga_07",
+    "name": "Central Siberian Taiga",
+    "country": "Russia",
+    "ecosystem": "Boreal Coniferous Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [99.95971, 59.97987],
+          [100.04029, 59.97987],
+          [100.04029, 60.02013],
+          [99.95971, 60.02013],
+          [99.95971, 59.97987]
+        ]
+      ]
+    },
+    "expected_agb_range": [40.0, 120.0],
+    "expected_canopy_cover_range": [50.0, 75.0],
+    "expected_forest_type": "Boreal Coniferous",
+    "reference_source": "Schepaschenko et al. (2011) Biomass and Bioenergy; Houghton et al. (2007)",
+    "notes": "Continuous Siberian boreal needleleaf forest on continuous permafrost with cold-climate slow biomass accumulation."
+  },
+  {
+    "id": "sundarbans_08",
+    "name": "Sundarbans Mangrove Delta",
+    "country": "Bangladesh",
+    "ecosystem": "Mangrove Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [89.08918, 21.88993],
+          [89.11082, 21.88993],
+          [89.11082, 21.91007],
+          [89.08918, 21.91007],
+          [89.08918, 21.88993]
+        ]
+      ]
+    },
+    "expected_agb_range": [100.0, 200.0],
+    "expected_canopy_cover_range": [70.0, 90.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Simard et al. (2019) Nature Geoscience; Giri et al. (2008)",
+    "notes": "World's largest contiguous halophytic mangrove forest delta, dominated by Heritiera fomes (Sundari)."
+  },
+  {
+    "id": "western_ghats_09",
+    "name": "Western Ghats Wet Evergreen Forest",
+    "country": "India",
+    "ecosystem": "Tropical Moist Broadleaf Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [76.98978, 10.48993],
+          [77.01022, 10.48993],
+          [77.01022, 10.51007],
+          [76.98978, 10.51007],
+          [76.98978, 10.48993]
+        ]
+      ]
+    },
+    "expected_agb_range": [200.0, 350.0],
+    "expected_canopy_cover_range": [80.0, 95.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Ramesh et al. (2010); Forest Survey of India (FSI) 2021",
+    "notes": "Biodiversity hotspot tropical wet evergreen montane forest in the Anamalai Hills of southern India."
+  },
+  {
+    "id": "yasuni_10",
+    "name": "Yasuní National Park",
+    "country": "Ecuador",
+    "ecosystem": "Tropical Moist Broadleaf Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-76.41424, -0.91424],
+          [-76.38576, -0.91424],
+          [-76.38576, -0.88576],
+          [-76.41424, -0.88576],
+          [-76.41424, -0.91424]
+        ]
+      ]
+    },
+    "expected_agb_range": [250.0, 400.0],
+    "expected_canopy_cover_range": [90.0, 98.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "Valencia et al. (2004); Bass et al. (2010) PLoS ONE",
+    "notes": "High-diversity western Amazonian moist equatorial rainforest near the intersection of the Andes and Amazon."
+  },
+  {
+    "id": "sahara_desert_11",
+    "name": "Sahara Desert (Erg Chech)",
+    "country": "Algeria",
+    "ecosystem": "Desert / Non-Forest",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [4.98453, 22.98576],
+          [5.01547, 22.98576],
+          [5.01547, 23.01424],
+          [4.98453, 23.01424],
+          [4.98453, 22.98576]
+        ]
+      ]
+    },
+    "expected_agb_range": [0.0, 10.0],
+    "expected_canopy_cover_range": [0.0, 5.0],
+    "expected_forest_type": "Non-Forest",
+    "reference_source": "Dynamic World Bare Ground / ESA WorldCover 2021 baseline",
+    "notes": "Hyper-arid Saharan sand dune field demonstrating CanopyAI zero-biomass edge-case detection."
+  },
+  {
+    "id": "pacific_ocean_12",
+    "name": "Pacific Ocean (Equatorial Pelagic)",
+    "country": "International Waters",
+    "ecosystem": "Marine / Open Ocean",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-140.01424, -0.01424],
+          [-139.98576, -0.01424],
+          [-139.98576, 0.01424],
+          [-140.01424, 0.01424],
+          [-140.01424, -0.01424]
+        ]
+      ]
+    },
+    "expected_agb_range": [0.0, 0.0],
+    "expected_canopy_cover_range": [0.0, 0.0],
+    "expected_forest_type": "Non-Forest",
+    "reference_source": "Copernicus Marine / GEBCO Open Pelagic Ocean baseline",
+    "notes": "Open pelagic ocean surface demonstrating water detection, zero carbon stock, and low confidence."
+  },
+  {
+    "id": "deforested_amazon_13",
+    "name": "Deforested Amazon Patch (Arc of Deforestation)",
+    "country": "Brazil",
+    "ecosystem": "Degraded Forest / Pasture Conversion",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-55.01015, -8.51007],
+          [-54.98985, -8.51007],
+          [-54.98985, -8.48993],
+          [-55.01015, -8.48993],
+          [-55.01015, -8.51007]
+        ]
+      ]
+    },
+    "expected_agb_range": [10.0, 80.0],
+    "expected_canopy_cover_range": [10.0, 40.0],
+    "expected_forest_type": "Tropical Moist Broadleaf",
+    "reference_source": "INPE PRODES Deforestation Monitoring / Hansen Global Forest Change",
+    "notes": "Post-deforestation pasture and secondary scrub in northern Mato Grosso exhibiting severe canopy loss."
+  }
+]

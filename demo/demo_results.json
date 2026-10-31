@@ -1,0 +1,443 @@
+{
+  "timestamp": "2026-10-31T22:51:52Z",
+  "data_mode": "SIMULATED_CALIBRATED",
+  "polygon_count": 13,
+  "total_processing_time_seconds": 0.0,
+  "results": [
+    {
+      "id": "amazon_01",
+      "name": "Amazon Rainforest (Primary Terra Firme)",
+      "country": "Brazil",
+      "ecosystem": "Tropical Moist Broadleaf Forest",
+      "area_ha": 996.7,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        250.0,
+        350.0
+      ],
+      "canopyai_agb_t_per_ha": 295.4,
+      "pct_deviation": -1.5,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        85.0,
+        95.0
+      ],
+      "canopyai_canopy_cover_pct": 89.2,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 62.0,
+      "total_biomass_t_per_ha": 357.4,
+      "carbon_t_per_ha": 167.99,
+      "co2e_t_per_ha": 615.98,
+      "total_co2e_tonnes": 613939.8,
+      "confidence_score": 97,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "congo_02",
+      "name": "Congo Basin Forest (Lowland Equatorial)",
+      "country": "Democratic Republic of the Congo",
+      "ecosystem": "Tropical Moist Broadleaf Forest",
+      "area_ha": 998.4,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        200.0,
+        300.0
+      ],
+      "canopyai_agb_t_per_ha": 265.0,
+      "pct_deviation": 6.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        80.0,
+        95.0
+      ],
+      "canopyai_canopy_cover_pct": 86.5,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 55.6,
+      "total_biomass_t_per_ha": 320.6,
+      "carbon_t_per_ha": 150.71,
+      "co2e_t_per_ha": 552.59,
+      "total_co2e_tonnes": 551683.2,
+      "confidence_score": 96,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "borneo_03",
+      "name": "Borneo Dipterocarp Rainforest",
+      "country": "Indonesia",
+      "ecosystem": "Tropical Moist Broadleaf Forest",
+      "area_ha": 499.3,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        300.0,
+        450.0
+      ],
+      "canopyai_agb_t_per_ha": 365.0,
+      "pct_deviation": -2.7,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        85.0,
+        95.0
+      ],
+      "canopyai_canopy_cover_pct": 91.0,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 76.6,
+      "total_biomass_t_per_ha": 441.6,
+      "carbon_t_per_ha": 207.58,
+      "co2e_t_per_ha": 761.11,
+      "total_co2e_tonnes": 379993.1,
+      "confidence_score": 94,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "black_forest_04",
+      "name": "Black Forest (Schwarzwald)",
+      "country": "Germany",
+      "ecosystem": "Temperate Broadleaf and Mixed Forest",
+      "area_ha": 502.3,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        150.0,
+        250.0
+      ],
+      "canopyai_agb_t_per_ha": 210.0,
+      "pct_deviation": 5.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        75.0,
+        90.0
+      ],
+      "canopyai_canopy_cover_pct": 82.0,
+      "expected_forest_type": "Temperate Broadleaf",
+      "canopyai_forest_type": "Temperate Broadleaf",
+      "bgb_t_per_ha": 54.6,
+      "total_biomass_t_per_ha": 264.6,
+      "carbon_t_per_ha": 124.36,
+      "co2e_t_per_ha": 455.99,
+      "total_co2e_tonnes": 229066.2,
+      "confidence_score": 97,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "redwood_05",
+      "name": "Redwood National and State Parks",
+      "country": "United States",
+      "ecosystem": "Temperate Rainforest",
+      "area_ha": 300.9,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        400.0,
+        800.0
+      ],
+      "canopyai_agb_t_per_ha": 580.0,
+      "pct_deviation": -3.3,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        85.0,
+        95.0
+      ],
+      "canopyai_canopy_cover_pct": 90.0,
+      "expected_forest_type": "Temperate Broadleaf",
+      "canopyai_forest_type": "Temperate Broadleaf",
+      "bgb_t_per_ha": 150.8,
+      "total_biomass_t_per_ha": 730.8,
+      "carbon_t_per_ha": 343.48,
+      "co2e_t_per_ha": 1259.41,
+      "total_co2e_tonnes": 379014.4,
+      "confidence_score": 91,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "boreal_finland_06",
+      "name": "Finnish Boreal Taiga (Kainuu)",
+      "country": "Finland",
+      "ecosystem": "Boreal Coniferous Forest",
+      "area_ha": 1013.5,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        50.0,
+        150.0
+      ],
+      "canopyai_agb_t_per_ha": 95.0,
+      "pct_deviation": -5.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        60.0,
+        80.0
+      ],
+      "canopyai_canopy_cover_pct": 68.0,
+      "expected_forest_type": "Boreal Coniferous",
+      "canopyai_forest_type": "Boreal Coniferous",
+      "bgb_t_per_ha": 22.8,
+      "total_biomass_t_per_ha": 117.8,
+      "carbon_t_per_ha": 55.37,
+      "co2e_t_per_ha": 203.01,
+      "total_co2e_tonnes": 205752.8,
+      "confidence_score": 87,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "siberian_taiga_07",
+      "name": "Central Siberian Taiga",
+      "country": "Russia",
+      "ecosystem": "Boreal Coniferous Forest",
+      "area_ha": 2016.8,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        40.0,
+        120.0
+      ],
+      "canopyai_agb_t_per_ha": 75.0,
+      "pct_deviation": -6.2,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        50.0,
+        75.0
+      ],
+      "canopyai_canopy_cover_pct": 62.0,
+      "expected_forest_type": "Boreal Coniferous",
+      "canopyai_forest_type": "Boreal Coniferous",
+      "bgb_t_per_ha": 18.0,
+      "total_biomass_t_per_ha": 93.0,
+      "carbon_t_per_ha": 43.71,
+      "co2e_t_per_ha": 160.27,
+      "total_co2e_tonnes": 323236.6,
+      "confidence_score": 90,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "sundarbans_08",
+      "name": "Sundarbans Mangrove Delta",
+      "country": "Bangladesh",
+      "ecosystem": "Mangrove Forest",
+      "area_ha": 498.7,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        100.0,
+        200.0
+      ],
+      "canopyai_agb_t_per_ha": 145.0,
+      "pct_deviation": -3.3,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        70.0,
+        90.0
+      ],
+      "canopyai_canopy_cover_pct": 79.0,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 30.4,
+      "total_biomass_t_per_ha": 175.4,
+      "carbon_t_per_ha": 82.46,
+      "co2e_t_per_ha": 302.36,
+      "total_co2e_tonnes": 150780.6,
+      "confidence_score": 89,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "western_ghats_09",
+      "name": "Western Ghats Wet Evergreen Forest",
+      "country": "India",
+      "ecosystem": "Tropical Moist Broadleaf Forest",
+      "area_ha": 498.5,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        200.0,
+        350.0
+      ],
+      "canopyai_agb_t_per_ha": 275.0,
+      "pct_deviation": 0.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        80.0,
+        95.0
+      ],
+      "canopyai_canopy_cover_pct": 87.5,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 57.8,
+      "total_biomass_t_per_ha": 332.8,
+      "carbon_t_per_ha": 156.39,
+      "co2e_t_per_ha": 573.44,
+      "total_co2e_tonnes": 285832.9,
+      "confidence_score": 96,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "yasuni_10",
+      "name": "Yasun\u00ed National Park",
+      "country": "Ecuador",
+      "ecosystem": "Tropical Moist Broadleaf Forest",
+      "area_ha": 998.3,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        250.0,
+        400.0
+      ],
+      "canopyai_agb_t_per_ha": 320.0,
+      "pct_deviation": -1.5,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        90.0,
+        98.0
+      ],
+      "canopyai_canopy_cover_pct": 94.0,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 67.2,
+      "total_biomass_t_per_ha": 387.2,
+      "carbon_t_per_ha": 181.98,
+      "co2e_t_per_ha": 667.27,
+      "total_co2e_tonnes": 666128.1,
+      "confidence_score": 96,
+      "confidence_label": "High",
+      "processing_time_seconds": 0.0,
+      "data_warnings": []
+    },
+    {
+      "id": "sahara_desert_11",
+      "name": "Sahara Desert (Erg Chech)",
+      "country": "Algeria",
+      "ecosystem": "Desert / Non-Forest",
+      "area_ha": 1000.5,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        0.0,
+        10.0
+      ],
+      "canopyai_agb_t_per_ha": 0.0,
+      "pct_deviation": -100.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": false,
+      "expected_canopy_cover_range": [
+        0.0,
+        5.0
+      ],
+      "canopyai_canopy_cover_pct": 0.0,
+      "expected_forest_type": "Non-Forest",
+      "canopyai_forest_type": "Non-Forest",
+      "bgb_t_per_ha": 0.0,
+      "total_biomass_t_per_ha": 0.0,
+      "carbon_t_per_ha": 0.0,
+      "co2e_t_per_ha": 0.0,
+      "total_co2e_tonnes": 0.0,
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "processing_time_seconds": 0.0,
+      "data_warnings": [
+        "Desert / bare ground detected (>60% bare ground with NDVI < 0.15). AGB set to 0.0 Mg/ha."
+      ]
+    },
+    {
+      "id": "pacific_ocean_12",
+      "name": "Pacific Ocean (Equatorial Pelagic)",
+      "country": "International Waters",
+      "ecosystem": "Marine / Open Ocean",
+      "area_ha": 998.4,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        0.0,
+        0.0
+      ],
+      "canopyai_agb_t_per_ha": 0.0,
+      "pct_deviation": 0.0,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        0.0,
+        0.0
+      ],
+      "canopyai_canopy_cover_pct": 0.0,
+      "expected_forest_type": "Non-Forest",
+      "canopyai_forest_type": "Non-Forest",
+      "bgb_t_per_ha": 0.0,
+      "total_biomass_t_per_ha": 0.0,
+      "carbon_t_per_ha": 0.0,
+      "co2e_t_per_ha": 0.0,
+      "total_co2e_tonnes": 0.0,
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "processing_time_seconds": 0.0,
+      "data_warnings": [
+        "Polygon is dominated by open water (>80%). Terrestrial forest biomass set to 0.0 Mg/ha."
+      ]
+    },
+    {
+      "id": "deforested_amazon_13",
+      "name": "Deforested Amazon Patch (Arc of Deforestation)",
+      "country": "Brazil",
+      "ecosystem": "Degraded Forest / Pasture Conversion",
+      "area_ha": 497.9,
+      "data_mode": "SIMULATED",
+      "expected_agb_range": [
+        10.0,
+        80.0
+      ],
+      "canopyai_agb_t_per_ha": 35.0,
+      "pct_deviation": -22.2,
+      "match_status": "\u2713 within range",
+      "in_exact_range": true,
+      "within_tolerance": true,
+      "expected_canopy_cover_range": [
+        10.0,
+        40.0
+      ],
+      "canopyai_canopy_cover_pct": 24.0,
+      "expected_forest_type": "Tropical Moist Broadleaf",
+      "canopyai_forest_type": "Tropical Moist Broadleaf",
+      "bgb_t_per_ha": 7.3,
+      "total_biomass_t_per_ha": 42.4,
+      "carbon_t_per_ha": 19.9,
+      "co2e_t_per_ha": 72.98,
+      "total_co2e_tonnes": 36335.7,
+      "confidence_score": 61,
+      "confidence_label": "Medium",
+      "processing_time_seconds": 0.0,
+      "data_warnings": [
+        "High tree cover loss detected over 5-year observation period (68.5%). Evidence of agricultural conversion / deforestation."
+      ]
+    }
+  ]
+}
