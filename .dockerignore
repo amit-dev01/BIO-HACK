@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Environment & Credentials
+.env*
+*.key
+*.pem
+*.json
+!requirements.txt
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+venv/
+.venv/
+env/
+
+# Tests & development files
+tests/
+phase4_prompt.txt
+docs/
+*.md
+

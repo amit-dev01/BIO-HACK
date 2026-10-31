@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: canopyai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MOCK_MODE=true
+      - ENVIRONMENT=development
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./app:/app/app:ro
+    restart: unless-stopped
+

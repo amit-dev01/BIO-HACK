@@ -9,7 +9,7 @@ import math
 import random
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import uuid
 
 from app.models.schemas import (
@@ -94,6 +94,7 @@ class InMemoryAnalysisRepository:
             forest_type="Tropical Moist Broadleaf Forest",
             ecoregion="Central Amazon Moist Forests",
             canopy_cover_pct=88.5,
+            canopy_data_available=True,
             mean_canopy_height_m=28.4,
             agb_t_per_ha=295.0,
             bgb_t_per_ha=70.8,
@@ -107,8 +108,15 @@ class InMemoryAnalysisRepository:
             confidence_interval_pct=8.4,
             ndvi_trend="stable",
             data_sources=["sentinel-2", "gedi", "landsat-8"],
-            processing_time_seconds=0.72,
+            processing_time_seconds=1,
             data_mode=DataMode.MOCK,
+            dominant_land_cover="Tree cover",
+            classification_method="Simulated / Latitudinal Biome Screening",
+            classification_confidence="High",
+            recommended_standard="IPCC Tier 1 / Tier 2 Screening",
+            data_warnings=[],
+            validation_summary={"valid_geometry": True, "area_ha": round(area_ha, 4)},
+            uncertainty={"empirical_interval_pct": 8.4},
             disclaimer="SIMULATED DATA (MOCK MODE): Generated for local testing. Estimates do not constitute verified carbon credits.",
         )
         self._storage[sample_id] = sample_analysis
@@ -175,6 +183,7 @@ class MockAnalysisService:
         self,
         request: AnalysisRequest,
         computed_area_ha: Optional[float] = None,
+        data_warnings: Optional[List[str]] = None,
     ) -> AnalysisResponse:
         """Generate a realistic, simulated carbon and biomass assessment for the provided polygon."""
         start_time = time.time()
@@ -249,7 +258,10 @@ class MockAnalysisService:
         co2e_t_per_ha = carbon_t_per_ha * (44.0 / 12.0)
         total_co2e = co2e_t_per_ha * area_ha
 
-        processing_time = round(time.time() - start_time, 4)
+        elapsed = time.time() - start_time
+        processing_time = max(1, int(round(elapsed)))
+
+        warnings_list = list(data_warnings or [])
 
         analysis = AnalysisResponse(
             analysis_id=str(uuid.uuid4()),
@@ -259,6 +271,7 @@ class MockAnalysisService:
             forest_type=forest_type,
             ecoregion=ecoregion,
             canopy_cover_pct=round(min(base_canopy_cover, 100.0), 2),
+            canopy_data_available=True,
             mean_canopy_height_m=round(base_height, 2),
             agb_t_per_ha=round(agb_t_per_ha, 2),
             bgb_t_per_ha=round(bgb_t_per_ha, 2),
@@ -274,6 +287,13 @@ class MockAnalysisService:
             data_sources=request.data_sources or ["sentinel-2", "gedi"],
             processing_time_seconds=processing_time,
             data_mode=DataMode.MOCK,
+            dominant_land_cover="Tree cover",
+            classification_method="Simulated / Latitudinal Biome Screening",
+            classification_confidence="High",
+            recommended_standard="IPCC Tier 1 / Tier 2 Screening",
+            data_warnings=warnings_list,
+            validation_summary={"valid_geometry": True, "area_ha": round(area_ha, 4)},
+            uncertainty={"empirical_interval_pct": confidence_interval_pct},
             disclaimer="SIMULATED DATA (MOCK MODE): Generated for local testing. Estimates do not constitute verified carbon credits.",
         )
 

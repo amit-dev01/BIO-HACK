@@ -48,7 +48,7 @@ class PolygonTooSmallError(CanopyAIException):
 
     def __init__(
         self,
-        message: str = "Polygon area is below the minimum threshold of 0.01 hectares",
+        message: str = "Polygon area is below the minimum threshold of 10.0 hectares",
         area_ha: Optional[float] = None,
         min_ha: Optional[float] = None,
     ) -> None:
@@ -70,7 +70,7 @@ class PolygonTooLargeError(CanopyAIException):
 
     def __init__(
         self,
-        message: str = "Polygon area exceeds the maximum allowable threshold of 200,000 hectares",
+        message: str = "Polygon area exceeds the maximum allowable threshold of 100,000 hectares",
         area_ha: Optional[float] = None,
         max_ha: Optional[float] = None,
     ) -> None:
@@ -120,6 +120,54 @@ class SatelliteUnavailableError(CanopyAIException):
         )
 
 
+class EarthEngineUnavailableError(CanopyAIException):
+    """Raised when Google Earth Engine service is unavailable."""
+
+    def __init__(
+        self,
+        message: str = "Google Earth Engine service is currently unavailable",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="earth_engine_unavailable",
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details,
+        )
+
+
+class EarthEngineTimeoutError(CanopyAIException):
+    """Raised when a Google Earth Engine query times out."""
+
+    def __init__(
+        self,
+        message: str = "Google Earth Engine query timed out",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="earth_engine_timeout",
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details,
+        )
+
+
+class SatelliteQueryFailedError(CanopyAIException):
+    """Raised when an Earth Engine satellite query fails to execute."""
+
+    def __init__(
+        self,
+        message: str = "Satellite query failed to execute",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="satellite_query_failed",
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details,
+        )
+
+
 class InternalServiceError(CanopyAIException):
     """Raised when an internal unexpected processing error occurs."""
 
@@ -130,6 +178,22 @@ class InternalServiceError(CanopyAIException):
     ) -> None:
         super().__init__(
             error="internal_error",
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details=details,
+        )
+
+
+class CalculationFailedError(CanopyAIException):
+    """Raised when a scientific biomass or carbon calculation algorithm fails."""
+
+    def __init__(
+        self,
+        message: str = "Calculation failed during biomass or carbon estimation",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="calculation_failed",
             message=message,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details=details,
@@ -148,6 +212,38 @@ class DatabaseError(CanopyAIException):
             error="database_error",
             message=message,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details=details,
+        )
+
+
+class AnalysisTimeoutError(CanopyAIException):
+    """Raised when analysis processing exceeds the configured overall timeout."""
+
+    def __init__(
+        self,
+        message: str = "Analysis exceeded 120 seconds.",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="analysis_timeout",
+            message=message,
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            details=details,
+        )
+
+
+class ReportTimeoutError(CanopyAIException):
+    """Raised when PDF report generation exceeds the configured report timeout."""
+
+    def __init__(
+        self,
+        message: str = "Report generation exceeded 30 seconds.",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            error="report_timeout",
+            message=message,
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             details=details,
         )
 
@@ -172,7 +268,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     errors = exc.errors()
     has_polygon_error = any("polygon" in [str(loc) for loc in err.get("loc", [])] for err in errors)
 
-    error_code = "invalid_polygon" if has_polygon_error else "invalid_request"
+    error_code = "invalid_polygon" if has_polygon_error else "invalid_request_body"
     error_messages = []
     for err in errors:
         loc = " -> ".join(str(l) for l in err.get("loc", []))
@@ -200,6 +296,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         422: "validation_error",
         500: "internal_error",
         503: "service_unavailable",
+        504: "gateway_timeout",
     }
     error_code = status_to_error.get(exc.status_code, "http_error")
     content = {

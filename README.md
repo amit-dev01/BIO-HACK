@@ -1,34 +1,93 @@
-# CanopyAI — Backend API Foundation
+# CanopyAI — Forest Biomass & Carbon Estimation Backend
 
-CanopyAI estimates forest biomass and carbon storage using satellite observation pipelines. This repository contains the backend REST API foundation developed by Developer 2.
+CanopyAI estimates forest biomass and carbon storage using NASA GEDI Level 4A, ESA Sentinel-2 Harmonized, and Google Dynamic World satellite data. Results are screening-level estimates and do not constitute formal carbon credit verification.
 
 ---
 
 ## Architecture & Responsibilities
 
-- **Developer 2 (Backend API Foundation)**:
-  - FastAPI application structure, CORS, routing, and lifecycle (`app/main.py`, `app/config.py`).
-  - Strict Pydantic v2 schemas and GeoJSON Polygon validation (`app/models/schemas.py`).
+- **Developer 2 (Backend API, Integration & Deployment Engineer)**:
+  - Complete REST API foundation, CORS, routing, and lifespan management (`app/main.py`, `app/config.py`).
+  - Full analysis pipeline orchestration wiring Developer 1's scientific modules (`app/services/analysis_service.py`).
+  - Strict Pydantic v2 data contracts, RFC 7946 GeoJSON validation, and schema definitions (`app/models/schemas.py`).
   - Mock simulation engine and in-memory persistence (`app/services/mock_service.py`).
-  - Analysis workflow interface ready for Developer 1 (`app/services/analysis_service.py`).
-  - PDF report generation service using ReportLab (`app/services/pdf_service.py`).
-  - Supabase database service abstraction (`app/services/database_service.py`).
-  - Centralized exception and error handling (`app/utils/errors.py`).
+  - Persistence layer with Supabase PostgreSQL and non-blocking in-memory fallback (`app/services/database_service.py`).
+  - PDF report generation service using ReportLab & Matplotlib (`app/services/pdf_service.py`, `app/api/reports.py`).
+  - Centralized exception and error handling pipeline (`app/utils/errors.py`).
+  - Production Docker containerization, `docker-compose.yml`, and `render.yaml` one-click deployment.
+  - End-to-end integration and timeout testing (`tests/test_integration.py`, `tests/test_e2e.py`).
+
 - **Developer 1 (Scientific & Satellite Pipeline)**:
-  - Responsible for satellite data acquisition and Earth Engine integration (`app/core/*`).
-  - Geo-processing algorithms and spatial metrics (`app/utils/geo.py`).
+  - Google Earth Engine data acquisition and authentication (`app/core/earth_engine.py`).
+  - NASA GEDI Level 4A Aboveground Biomass Density and Level 2A Canopy Height extraction.
+  - ESA Sentinel-2 NDVI surface reflectance and 5-year quarterly vegetation trends.
+  - Root-to-shoot biome-specific below-ground biomass algorithms (`app/core/biomass.py`).
+  - Stoichiometric carbon stock and CO2 equivalent conversions (`app/core/carbon.py`).
+  - Multi-factor forest biome and land-cover classification (`app/core/forest_classifier.py`).
+  - Scientific confidence and empirical uncertainty assessment (`app/core/confidence.py`).
+  - Geodesic spatial geometry calculations on WGS84 (`app/utils/geo.py`).
 
 ---
 
 ## Tech Stack
 
-- **Python 3.11+** (Tested on Python 3.14)
-- **FastAPI**
-- **Uvicorn**
+- **Python 3.11+**
+- **FastAPI & Uvicorn**
 - **Pydantic v2 & Pydantic-Settings**
-- **ReportLab**
-- **Pytest**
-- **Python-dotenv**
+- **Google Earth Engine API (`earthengine-api`)**
+- **Supabase Python SDK & PostgreSQL**
+- **ReportLab & Matplotlib**
+- **Shapely & PyProj**
+- **Docker & Docker Compose**
+- **Pytest & HTTPX**
+
+---
+
+## Full Analysis Pipeline Workflow
+
+```text
+POST /api/analyze
+  │
+  ├─ 1. Validate Polygon Geometry (geo.validate_polygon)
+  ├─ 2. Calculate Geodesic Area in Hectares (geo.calculate_area_ha)
+  ├─ 3. Enforce Area Operational Limits (10 to 100,000 ha)
+  │
+  ├─ 4. Execution Mode Branch:
+  │    ├─ IF MOCK_MODE or GEE Credentials Missing:
+  │    │    └─ Simulate realistic biome biomass (mock_service.py)
+  │    │         [Set data_mode="mock", add simulation warning if GEE failed]
+  │    │
+  │    └─ IF REAL SATELLITE MODE:
+  │         ├─ Query Earth Engine Satellite Observations (60s timeout)
+  │         │    - NASA GEDI L4A (AGBD t/ha)
+  │         │    - NASA GEDI L2A (Canopy Height m)
+  │         │    - Sentinel-2 NDVI & 5-year quarterly trend
+  │         │    - Dynamic World canopy cover
+  │         ├─ Classify Forest Biome & Ecoregion (forest_classifier.py)
+  │         ├─ Calculate Below-Ground Biomass (biomass.py)
+  │         ├─ Calculate Total Biomass Density (biomass.py)
+  │         ├─ Calculate Carbon Stock Density (carbon.py)
+  │         ├─ Calculate CO2 Equivalent Density (carbon.py)
+  │         ├─ Calculate Total CO2 across Polygon Area (carbon.py)
+  │         └─ Assess Scientific Confidence & Empirical Uncertainty (confidence.py)
+  │
+  ├─ 5. Assemble Structured Analysis Response
+  ├─ 6. Persist to Supabase Database (10s timeout, non-blocking on failure)
+  └─ 7. Return Response (Overall 120s timeout -> HTTP 504)
+```
+
+---
+
+## Timeout Management
+
+All timeouts are configurable via environment variables:
+
+| Level | Config Setting | Default | Behavior on Expiry |
+|---|---|---|---|
+| **Earth Engine Queries** | `GEE_TIMEOUT_SECONDS` | `60s` | Sets satellite metrics to null, adds warning, continues with available data |
+| **Analysis Request** | `ANALYSIS_TIMEOUT_SECONDS` | `120s` | Returns `HTTP 504 Gateway Timeout` with `{"error": "analysis_timeout"}` |
+| **Database Operations** | `DATABASE_TIMEOUT_SECONDS` | `10s` | Logs error, non-blocking: analysis response still returned to user |
+| **PDF Generation** | `PDF_TIMEOUT_SECONDS` | `30s` | Returns `HTTP 504 Gateway Timeout` with `{"error": "report_timeout"}` |
 
 ---
 
@@ -36,97 +95,51 @@ CanopyAI estimates forest biomass and carbon storage using satellite observation
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Backend operational status, version, server timestamp, and mock mode status |
-| `POST` | `/api/analyze` | Submit GeoJSON Polygon and analysis configuration to compute biomass and carbon estimates (persisted to Supabase) |
-| `GET` | `/api/analyze/{analysis_id}` | Retrieve previously computed analysis by unique ID from Supabase |
-| `GET` | `/api/analyses` | Paginated list of analyses (`?limit=20&offset=0`) ordered by creation date, newest first |
-| `GET` | `/api/reports/{analysis_id}/download` | Download summary PDF report for an analysis |
-| `GET` | `/docs` | Interactive Swagger API documentation |
+| `GET` | `/api/health` | Diagnostic status: `mock_mode`, `earth_engine` (connected/disconnected/mock), `database` (connected/disconnected) |
+| `POST` | `/api/analyze` | Submit GeoJSON Polygon and compute biomass & carbon estimates (120s timeout) |
+| `GET` | `/api/analyze/{analysis_id}` | Retrieve previously computed analysis by unique ID |
+| `GET` | `/api/analyses` | Paginated list of analyses (`?limit=20&offset=0`) ordered newest first |
+| `GET` | `/api/reports/{analysis_id}/download` | Download comprehensive PDF report (30s timeout) |
+| `GET` | `/docs` | Interactive OpenAPI Swagger documentation |
 | `GET` | `/redoc` | Interactive ReDoc documentation |
 
 ---
 
-## Phase 2: Supabase Persistence & Database Design
+## Deployment
 
-Analyses are persisted in PostgreSQL via Supabase in the `analyses` table:
+### 1. Docker Production Image
 
-```sql
-CREATE TABLE IF NOT EXISTS public.analyses (
-    analysis_id TEXT PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-    polygon_geojson JSONB NOT NULL,
-    area_ha DOUBLE PRECISION NOT NULL,
-    forest_type TEXT,
-    total_co2e DOUBLE PRECISION,
-    confidence_score INTEGER CHECK (confidence_score >= 0 AND confidence_score <= 100),
-    data_mode TEXT NOT NULL CHECK (data_mode IN ('mock', 'satellite')),
-    full_response JSONB NOT NULL,
-    status TEXT NOT NULL DEFAULT 'complete' CHECK (status IN ('complete', 'failed'))
-);
+The multi-stage `Dockerfile` uses `python:3.11-slim`, builds dependencies in an isolated stage, and outputs a minimal image (< 500MB) without development, test, or credential files:
+
+```bash
+docker build -t canopyai-backend .
+docker run -p 8000:8000 -e MOCK_MODE=true canopyai-backend
 ```
 
-### Mock Mode & Fallback Strategy
-- **Without Supabase**: If `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` are unset, the service automatically runs in mock mode with an in-memory repository.
-- **With Supabase**: When credentials are provided, analyses are persisted directly into Supabase and marked with `data_mode="mock"` (or `"satellite"` in production).
-- Complete responses are preserved in `full_response` without field truncation.
+### 2. Docker Compose (Local Development)
+
+```bash
+docker-compose up --build
+```
+
+### 3. One-Click Render Deployment
+
+A production deployment blueprint is provided in `render.yaml`. Connect your repository to Render to deploy with Docker runtime:
+- **Service Type**: Web Service
+- **Runtime**: Docker
+- **Environment Variables**:
+  - `MOCK_MODE`: `false` (or `true` for staging)
+  - `GEE_SERVICE_ACCOUNT_EMAIL`: Google Service Account email
+  - `GEE_PRIVATE_KEY_PATH`: Path to secret service account key file
+  - `SUPABASE_URL`: Supabase project URL
+  - `SUPABASE_SERVICE_KEY`: Supabase service role key
+  - `FRONTEND_URL`: Production Next.js frontend origin (e.g. `https://canopyai.vercel.app`)
 
 ---
 
-## Data Contract Specifications
+## Running Tests
 
-### Analysis Request (`POST /api/analyze`)
-
-```json
-{
-  "polygon": {
-    "type": "Polygon",
-    "coordinates": [
-      [
-        [-60.05, -3.12],
-        [-60.00, -3.12],
-        [-60.00, -3.16],
-        [-60.05, -3.16],
-        [-60.05, -3.12]
-      ]
-    ]
-  },
-  "analysis_type": "quick",
-  "data_sources": ["sentinel-2", "gedi"]
-}
-```
-
-### Analysis Response Contract
-
-- **Area Unit**: Hectares (`ha`)
-- **Biomass Unit**: Tonnes per hectare (`t/ha`)
-- **Carbon Unit**: Tonnes of carbon per hectare (`t/ha`)
-- **CO2e Unit**: Tonnes of CO2 equivalent (`total_co2e`, `co2e_t_per_ha`)
-- **Mode Flag**: `data_mode`: `"mock"` | `"satellite"`
-- **Strict Compliance**: No carbon credit revenue projections or unverified claims.
-
----
-
-## Local Development & Running
-
-### 1. Configure Environment
-
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-### 2. Run the Server
-
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-- API Base: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`
-- Frontend Allowed Origin: `http://localhost:3000`
-
-### 3. Run Test Suite
+Run the complete test suite (194 tests covering unit, database, geospatial, PDF, and end-to-end integration):
 
 ```bash
 python -m pytest -v

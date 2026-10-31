@@ -1,5 +1,6 @@
 """PDF Report download API endpoints."""
 
+import asyncio
 from io import BytesIO
 import logging
 from typing import Any, Dict
@@ -7,10 +8,11 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.config import Settings, get_settings
 from app.models.schemas import ErrorResponse
 from app.services.database_service import DatabaseService, database_service
 from app.services.pdf_service import generate_pdf_report
-from app.utils.errors import AnalysisNotFoundError
+from app.utils.errors import AnalysisNotFoundError, ReportTimeoutError
 
 logger = logging.getLogger("canopyai.reports")
 
@@ -29,13 +31,15 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
         },
         404: {"model": ErrorResponse, "description": "Analysis not found"},
         500: {"model": ErrorResponse, "description": "PDF generation failed"},
+        504: {"model": ErrorResponse, "description": "PDF generation timed out (exceeded 30 seconds)"},
     },
 )
 async def download_report(
     analysis_id: str,
     db_service: DatabaseService = Depends(lambda: database_service),
+    settings: Settings = Depends(get_settings),
 ) -> Any:
-    """Generate and stream a PDF summary report for a given analysis ID."""
+    """Generate and stream a PDF summary report for a given analysis ID with 30s timeout."""
     # 1. Retrieve analysis from database/in-memory repository
     analysis = db_service.get_analysis_by_id(analysis_id)
     if not analysis:
@@ -49,9 +53,17 @@ async def download_report(
     else:
         full_response = dict(analysis)
 
-    # 3. Generate the PDF bytes in memory
+    # 3. Generate the PDF bytes in memory with timeout
     try:
-        pdf_bytes = generate_pdf_report(full_response)
+        pdf_bytes = await asyncio.wait_for(
+            asyncio.to_thread(generate_pdf_report, full_response),
+            timeout=float(settings.pdf_timeout_seconds),
+        )
+    except asyncio.TimeoutError:
+        logger.error("PDF generation timed out after %s seconds for analysis %s", settings.pdf_timeout_seconds, analysis_id)
+        raise ReportTimeoutError(
+            message=f"Report generation exceeded {settings.pdf_timeout_seconds} seconds."
+        )
     except Exception as e:
         logger.error("PDF generation failed for analysis %s: %s", analysis_id, str(e), exc_info=True)
         return JSONResponse(

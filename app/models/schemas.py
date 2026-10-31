@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import Enum
 import math
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -74,7 +74,7 @@ class GeoJSONPolygon(BaseModel):
 
             # Validate closure (first point equals last point)
             first_pt, last_pt = ring[0], ring[-1]
-            if abs(first_pt[0] - last_pt[0]) > 1e-7 or abs(first_pt[1] - last_pt[-1]) > 1e-7:
+            if abs(first_pt[0] - last_pt[0]) > 1e-7 or abs(first_pt[1] - last_pt[1]) > 1e-7:
                 raise ValueError(
                     f"Linear ring {ring_idx} is not closed: first point {first_pt[:2]} != last point {last_pt[:2]}"
                 )
@@ -117,6 +117,7 @@ class AnalysisResponse(BaseModel):
     forest_type: Optional[str] = Field(None, description="Dominant forest classification type")
     ecoregion: Optional[str] = Field(None, description="Terrestrial ecoregion classification")
     canopy_cover_pct: Optional[float] = Field(None, description="Estimated canopy cover percentage (0-100%)")
+    canopy_data_available: Optional[bool] = Field(None, description="Indicates if canopy cover or height data was available")
     mean_canopy_height_m: Optional[float] = Field(None, description="Estimated mean canopy height in meters (m)")
     agb_t_per_ha: Optional[float] = Field(None, description="Above-ground biomass density (tonnes/ha)")
     bgb_t_per_ha: Optional[float] = Field(None, description="Below-ground biomass density (tonnes/ha)")
@@ -125,17 +126,40 @@ class AnalysisResponse(BaseModel):
     carbon_t_per_ha: Optional[float] = Field(None, description="Carbon density in tonnes of carbon/ha")
     co2e_t_per_ha: Optional[float] = Field(None, description="Carbon dioxide equivalent density in tonnes CO2e/ha")
     total_co2e: Optional[float] = Field(None, description="Total estimated CO2e stock in tonnes across entire area")
-    confidence_score: Optional[float] = Field(None, description="Model confidence score between 0.0 and 1.0")
+    confidence_score: Optional[float] = Field(None, description="Model confidence score between 0.0 and 1.0 (or 0-100)")
     confidence_label: Optional[str] = Field(None, description="Human-readable confidence grade: High, Moderate, Low")
     confidence_interval_pct: Optional[float] = Field(None, description="Estimated uncertainty margin percentage (±%)")
-    ndvi_trend: Optional[str] = Field(None, description="Normalized Difference Vegetation Index trend: stable, increasing, decreasing")
+    ndvi_trend: Optional[Union[str, List[Dict[str, Any]]]] = Field(
+        None,
+        description="NDVI vegetation health trend: string classification or quarterly time series",
+    )
     data_sources: List[str] = Field(..., description="Satellite and sensor datasets used during computation")
-    processing_time_seconds: float = Field(..., description="Server-side processing runtime in seconds")
-    data_mode: DataMode = Field(..., description="Indicates whether result is 'mock' (simulated) or 'satellite'")
+    processing_time_seconds: int = Field(..., description="Server-side processing runtime in seconds (integer)")
+    data_mode: Union[DataMode, str] = Field(..., description="Indicates whether result is 'mock' (simulated) or 'satellite'")
+    dominant_land_cover: Optional[str] = Field(None, description="Dominant land cover class (e.g. Tree cover, Non-Forest)")
+    classification_method: Optional[str] = Field(None, description="Method used to classify forest type / biome")
+    classification_confidence: Optional[str] = Field(None, description="Confidence assessment for land cover classification")
+    recommended_standard: Optional[str] = Field(None, description="Recommended carbon estimation standard (e.g. IPCC Tier 1/2)")
+    data_warnings: List[str] = Field(default_factory=list, description="Warnings encountered during satellite retrieval")
+    validation_summary: Optional[Dict[str, Any]] = Field(None, description="Geometric validation summary")
+    uncertainty: Optional[Dict[str, Any]] = Field(None, description="Empirical uncertainty metrics")
     disclaimer: str = Field(
         default="Scientific ecological estimation for monitoring purposes. Does not constitute verified or certified carbon credits.",
         description="Regulatory disclaimer on carbon estimates",
     )
+
+    @field_validator("processing_time_seconds", mode="before")
+    @classmethod
+    def coerce_processing_time(cls, v: Any) -> int:
+        """Coerce float/string processing time to integer seconds."""
+        if isinstance(v, (float, int)):
+            return int(round(v))
+        if isinstance(v, str):
+            try:
+                return int(round(float(v)))
+            except ValueError:
+                pass
+        return v
 
 
 class AnalysisSummary(BaseModel):
@@ -183,6 +207,8 @@ class HealthResponse(BaseModel):
     timestamp: datetime = Field(..., description="Current server UTC timestamp")
     mock_mode: bool = Field(..., description="True if operating in simulated mock mode without satellite credentials")
     environment: str = Field(default="development", description="Runtime environment")
+    earth_engine: str = Field(default="mock", description="'connected', 'disconnected', or 'mock'")
+    database: str = Field(default="disconnected", description="'connected' or 'disconnected'")
 
 
 class ErrorResponse(BaseModel):
