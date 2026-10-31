@@ -35,3 +35,4 @@ jobs:
           SUPABASE_SERVICE_KEY: ""
         run: |
           python -m pytest -v
+

@@ -205,3 +205,4 @@ if __name__ == "__main__":
             pdf = test_client.get(f"/api/reports/{an.json()['analysis_id']}/download")
             logger.info("In-process PDF check: %d size=%d bytes", pdf.status_code, len(pdf.content))
             logger.info("In-process verification successful.")
+

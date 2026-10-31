@@ -144,3 +144,4 @@ Tab 5: Pre-recorded 1080p 60fps walkthrough video
 | **PDF download fails or hangs** | Missing font or chart rendering glitch | Check server logs; `PdfService` generates charts directly in-memory via Matplotlib `Agg` backend without disk locks. Test via `python scripts/warm_up.py`. |
 | **Database connection error** | Supabase connection limit or network timeout | Backend automatically falls back to in-memory history storage; analysis and PDF generation continue without disruption. |
 | **Demo history table is empty** | Database reset or fresh deployment | Run `python scripts/seed_demo_data.py --url <RENDER_URL>` (takes 5 seconds to re-populate 10 biomes). |
+

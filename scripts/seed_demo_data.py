@@ -294,3 +294,4 @@ def seed_database() -> int:
 
 if __name__ == "__main__":
     seed_database()
+

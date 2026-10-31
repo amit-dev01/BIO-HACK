@@ -81,3 +81,4 @@ def setup_logging(log_level: Optional[str] = None) -> None:
     # Ensure canopyai logger propagates with the configured level
     app_logger = logging.getLogger("canopyai")
     app_logger.setLevel(level)
+

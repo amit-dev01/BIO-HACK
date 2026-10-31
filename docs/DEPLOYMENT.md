@@ -185,3 +185,4 @@ If cloud hosting is unreachable:
    ngrok http 8000
    ```
 3. Update `NEXT_PUBLIC_API_URL` on the Vercel frontend or demo browser.
+
