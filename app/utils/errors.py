@@ -248,22 +248,30 @@ class ReportTimeoutError(CanopyAIException):
         )
 
 
+from app.utils.logging import get_current_request_id
+
 # --- Centralized FastAPI Exception Handlers ---
 
 
 async def canopy_ai_exception_handler(request: Request, exc: CanopyAIException) -> JSONResponse:
-    """Handle custom application domain exceptions with consistent JSON formatting."""
+    """Handle custom application domain exceptions with consistent JSON formatting and request tracking."""
+    req_id = get_current_request_id()
     content: Dict[str, Any] = {
         "error": exc.error,
         "message": exc.message,
     }
     if exc.details:
         content["details"] = exc.details
-    return JSONResponse(status_code=exc.status_code, content=content)
+    if req_id:
+        content["request_id"] = req_id
+
+    headers = {"X-Request-ID": req_id} if req_id else None
+    return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle Pydantic request validation errors and translate into consistent format."""
+    req_id = get_current_request_id()
     # Check if the validation error is associated with the polygon field
     errors = exc.errors()
     has_polygon_error = any("polygon" in [str(loc) for loc in err.get("loc", [])] for err in errors)
@@ -275,17 +283,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         msg = err.get("msg", "Validation failed")
         error_messages.append(f"{loc}: {msg}" if loc else msg)
 
-    content = {
+    content: Dict[str, Any] = {
         "error": error_code,
         "message": "; ".join(error_messages) if error_messages else "Request validation failed",
         "details": [{"loc": err.get("loc"), "msg": err.get("msg"), "type": err.get("type")} for err in errors],
     }
+    if req_id:
+        content["request_id"] = req_id
+
     status_code = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422)
-    return JSONResponse(status_code=status_code, content=content)
+    headers = {"X-Request-ID": req_id} if req_id else None
+    return JSONResponse(status_code=status_code, content=content, headers=headers)
 
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Handle standard Starlette / FastAPI HTTPExceptions consistently."""
+    req_id = get_current_request_id()
     # Map common status codes to error identifiers
     status_to_error = {
         400: "bad_request",
@@ -299,18 +312,27 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         504: "gateway_timeout",
     }
     error_code = status_to_error.get(exc.status_code, "http_error")
-    content = {
+    content: Dict[str, Any] = {
         "error": error_code,
         "message": str(exc.detail) if exc.detail else "An HTTP error occurred",
     }
-    return JSONResponse(status_code=exc.status_code, content=content)
+    if req_id:
+        content["request_id"] = req_id
+
+    headers = {"X-Request-ID": req_id} if req_id else None
+    return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all handler for unhandled exceptions to prevent stack trace leaks."""
-    logger.error("Unhandled server exception encountered on %s: %s", request.url.path, str(exc), exc_info=True)
-    content = {
+    req_id = get_current_request_id()
+    logger.error("Unhandled server exception on %s: %s", request.url.path, str(exc), exc_info=True)
+    content: Dict[str, Any] = {
         "error": "internal_error",
         "message": "An internal server error occurred.",
     }
-    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=content)
+    if req_id:
+        content["request_id"] = req_id
+
+    headers = {"X-Request-ID": req_id} if req_id else None
+    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=content, headers=headers)

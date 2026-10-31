@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     api_prefix: str = Field(default="/api", description="Base prefix for API endpoints")
     environment: str = Field(default="development", description="Runtime environment")
     debug: bool = Field(default=False, description="Enable debug mode")
+    log_level: str = Field(default="INFO", description="Log level (DEBUG, INFO, WARNING, ERROR)")
 
     # Server configuration
     host: str = Field(default="0.0.0.0", description="Server host binding")
@@ -25,11 +26,15 @@ class Settings(BaseSettings):
 
     # CORS configuration
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
-        description="Allowed CORS origins, defaults to Next.js development server",
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "https://canopyai.vercel.app",
+        ],
+        description="Allowed CORS origins, defaults to local dev and production frontend",
     )
     frontend_url: Optional[str] = Field(
-        default=None,
+        default="https://canopyai.vercel.app",
         description="Optional single frontend deployment URL added to allowed CORS origins",
     )
 
@@ -65,6 +70,22 @@ class Settings(BaseSettings):
     pdf_timeout_seconds: Union[int, float] = Field(
         default=30,
         description="Timeout for PDF report generation in seconds (default: 30s)",
+    )
+
+    # In-memory Caching TTL (in seconds)
+    analysis_cache_ttl_seconds: int = Field(
+        default=3600,
+        description="Cache TTL in seconds for individual analysis results (default: 1 hour)",
+    )
+    list_cache_ttl_seconds: int = Field(
+        default=60,
+        description="Cache TTL in seconds for paginated analysis history (default: 60s)",
+    )
+
+    # Error monitoring: Sentry
+    sentry_dsn: Optional[str] = Field(
+        default=None,
+        description="Optional Sentry DSN for production exception and APM monitoring",
     )
 
     # External services: Supabase

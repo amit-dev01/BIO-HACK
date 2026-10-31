@@ -2,11 +2,14 @@
 
 from contextlib import asynccontextmanager
 import logging
+import os
+import time
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api import analysis, health, reports
@@ -18,12 +21,15 @@ from app.utils.errors import (
     unhandled_exception_handler,
     validation_exception_handler,
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+from app.utils.logging import (
+    generate_request_id,
+    request_id_var,
+    set_current_request_id,
+    setup_logging,
 )
+
+# Initialize structured logging
+setup_logging()
 logger = logging.getLogger("canopyai")
 
 
@@ -32,6 +38,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application startup and shutdown lifecycle events."""
     # 1. Load environment variables
     settings = get_settings()
+
+    # Configure Sentry error monitoring if DSN is set
+    sentry_dsn = settings.sentry_dsn or os.getenv("SENTRY_DSN")
+    if sentry_dsn:
+        try:
+            import sentry_sdk
+            from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                integrations=[FastApiIntegration()],
+                traces_sample_rate=0.1,
+                environment=settings.environment,
+            )
+            logger.info("Sentry APM and error monitoring initialized")
+        except Exception as sentry_exc:
+            logger.warning("Could not initialize Sentry: %s", sentry_exc)
+
     logger.info("Initializing %s v%s in %s environment", settings.app_name, settings.app_version, settings.environment)
     logger.info("Operational mode: %s", "MOCK (Simulated)" if settings.mock_mode else "ACTIVE SATELLITE")
     logger.info("Allowed CORS origins: %s", settings.effective_cors_origins)
@@ -91,13 +115,45 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Configure CORS for Next.js frontend (localhost:3000) and other configured origins
+    # 6.3 Response Compression via GZip middleware (payloads > 1000 bytes)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+    # 5.2 Request ID tracking & structured request logging middleware
+    @app.middleware("http")
+    async def request_tracing_middleware(request: Request, call_next) -> Response:
+        req_id = request.headers.get("X-Request-ID") or generate_request_id()
+        token = request_id_var.set(req_id)
+        start_ts = time.time()
+
+        # Log incoming API request (excluding noisy health checks from DEBUG/INFO if desired)
+        if not request.url.path.endswith("/health"):
+            logger.info(
+                "Incoming request: %s %s",
+                request.method,
+                request.url.path,
+                extra={"context": {"method": request.method, "path": request.url.path, "request_id": req_id}},
+            )
+
+        try:
+            response = await call_next(request)
+            duration_ms = round((time.time() - start_ts) * 1000, 2)
+            response.headers["X-Request-ID"] = req_id
+            response.headers["X-Response-Time-Ms"] = str(duration_ms)
+            return response
+        except Exception as exc:
+            logger.error("Request unhandled failure on %s: %s", request.url.path, exc)
+            raise
+        finally:
+            request_id_var.reset(token)
+
+    # Configure CORS for Next.js frontend (localhost:3000, vercel) and other configured origins
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.effective_cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Response-Time-Ms"],
     )
 
     # Register centralized exception handlers for consistent error contracts

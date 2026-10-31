@@ -4,19 +4,23 @@ services:
     runtime: docker
     plan: starter
     region: oregon
+    branch: main
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
       - key: MOCK_MODE
         value: "false"
+      - key: PORT
+        value: "8000"
       - key: GEE_SERVICE_ACCOUNT_EMAIL
         sync: false
       - key: GEE_PRIVATE_KEY_PATH
-        sync: false
+        value: "/etc/secrets/gee-key.json"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: FRONTEND_URL
-        sync: false
-
+        value: "https://canopyai.vercel.app"
+      - key: LOG_LEVEL
+        value: "INFO"

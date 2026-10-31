@@ -20,6 +20,7 @@ from app.models.schemas import (
     GeoJSONPolygon,
     PaginatedAnalysisResponse,
 )
+from app.services.cache_service import cache_service
 from app.services.database_service import DatabaseService, database_service
 from app.services.mock_service import (
     MockAnalysisService,
@@ -31,6 +32,7 @@ from app.utils.errors import (
     PolygonTooLargeError,
     PolygonTooSmallError,
 )
+from app.utils.logging import get_current_request_id
 
 logger = logging.getLogger("canopyai.analysis_service")
 
@@ -52,7 +54,8 @@ class AnalysisService:
     11. Evaluate data quality & confidence (confidence.calculate_confidence)
     12. Assemble analysis response
     13. Save analysis to persistence repository (with timeout & failure tolerance)
-    14. Return response
+    14. Update performance caches
+    15. Return response
     """
 
     def __init__(
@@ -130,6 +133,7 @@ class AnalysisService:
         9. confidence.calculate_confidence
         """
         start_time = time.time()
+        req_id = get_current_request_id()
 
         # 1. Validate polygon geometry
         self.validate_polygon_geometry(request.polygon)
@@ -150,6 +154,7 @@ class AnalysisService:
                 logger.warning(
                     "Earth Engine credentials missing or initialization failed: %s. Falling back to mock mode.",
                     ee_err,
+                    extra={"context": {"error": str(ee_err)}},
                 )
                 is_mock = True
                 fallback_warning = "Satellite service unavailable. Results are simulated."
@@ -161,7 +166,7 @@ class AnalysisService:
                 computed_area_ha=area_ha,
                 data_warnings=warnings_list,
             )
-            return self._save_with_timeout(analysis)
+            return self._finalize_and_save(analysis, start_time, req_id)
 
         # 4. Active Real Satellite Processing Pipeline
         data_warnings: List[str] = []
@@ -174,7 +179,11 @@ class AnalysisService:
             try:
                 sat_obs = future.result(timeout=self.settings.gee_timeout_seconds)
             except concurrent.futures.TimeoutError:
-                logger.warning("Earth Engine query timed out after %s seconds", self.settings.gee_timeout_seconds)
+                logger.warning(
+                    "Earth Engine query timed out after %s seconds",
+                    self.settings.gee_timeout_seconds,
+                    extra={"context": {"timeout_seconds": self.settings.gee_timeout_seconds}},
+                )
                 data_warnings.append("Earth Engine query timed out after 60 seconds. Satellite observations unavailable.")
                 sat_obs = {
                     "agb_t_per_ha": None,
@@ -191,7 +200,11 @@ class AnalysisService:
                     "data_sources": ["NASA GEDI Level 4A", "ESA Sentinel-2"],
                 }
             except Exception as exc:
-                logger.warning("Earth Engine query failed: %s", exc)
+                logger.error(
+                    "Earth Engine query failed: %s",
+                    exc,
+                    extra={"context": {"error": str(exc)}},
+                )
                 data_warnings.append(f"Satellite observation retrieval failed: {exc}")
                 sat_obs = {
                     "agb_t_per_ha": None,
@@ -350,7 +363,56 @@ class AnalysisService:
             disclaimer="Scientific ecological estimation for monitoring purposes. Does not constitute verified or certified carbon credits.",
         )
 
-        return self._save_with_timeout(analysis)
+        return self._finalize_and_save(analysis, start_time, req_id)
+
+    def _finalize_and_save(
+        self,
+        analysis: AnalysisResponse,
+        start_time: float,
+        request_id: Optional[str] = None,
+    ) -> AnalysisResponse:
+        """Persist analysis to database, update memory caches, and log telemetry."""
+        saved = self._save_with_timeout(analysis)
+
+        # Update in-memory caches
+        cache_service.set_analysis(
+            saved.analysis_id,
+            saved,
+            ttl_seconds=self.settings.analysis_cache_ttl_seconds,
+        )
+        cache_service.invalidate_list_cache()
+
+        total_elapsed = time.time() - start_time
+        if total_elapsed > 30.0:
+            logger.warning(
+                "Slow analysis completion for %s: %.2fs",
+                saved.analysis_id,
+                total_elapsed,
+                extra={"context": {"duration_seconds": total_elapsed, "analysis_id": saved.analysis_id}},
+            )
+
+        # Log structured completion event at INFO level
+        data_mode_str = (
+            saved.data_mode.value
+            if hasattr(saved.data_mode, "value")
+            else str(saved.data_mode)
+        )
+        logger.info(
+            "Analysis completed successfully: %s",
+            saved.analysis_id,
+            extra={
+                "context": {
+                    "request_id": request_id,
+                    "analysis_id": saved.analysis_id,
+                    "area_ha": saved.area_ha,
+                    "total_co2e": saved.total_co2e,
+                    "processing_time_seconds": saved.processing_time_seconds,
+                    "data_mode": data_mode_str,
+                }
+            },
+        )
+
+        return saved
 
     def _save_with_timeout(self, analysis: AnalysisResponse) -> AnalysisResponse:
         """Save analysis to Supabase/memory repository with 10s timeout, non-blocking on failure."""
@@ -360,19 +422,33 @@ class AnalysisService:
                 saved = future.result(timeout=self.settings.database_timeout_seconds)
                 return saved
         except Exception as exc:
-            logger.error(
+            logger.warning(
                 "Database persistence timed out or failed for analysis %s: %s",
                 analysis.analysis_id,
                 exc,
+                extra={"context": {"analysis_id": analysis.analysis_id, "error": str(exc)}},
             )
             # The analysis result is lost in database but the user still gets their answer
             return analysis
 
     def get_analysis_by_id(self, analysis_id: str) -> AnalysisResponse:
-        """Retrieve a previously generated analysis by its unique ID."""
+        """Retrieve a previously generated analysis by its unique ID (checking cache first)."""
+        # 1. Check in-memory cache
+        cached = cache_service.get_analysis(analysis_id)
+        if cached:
+            return cached
+
+        # 2. Query persistence repository
         analysis = self.database_service.get_analysis_by_id(analysis_id)
         if not analysis:
             raise AnalysisNotFoundError(analysis_id=analysis_id)
+
+        # 3. Store in cache
+        cache_service.set_analysis(
+            analysis_id,
+            analysis,
+            ttl_seconds=self.settings.analysis_cache_ttl_seconds,
+        )
         return analysis
 
     def list_analyses(
@@ -381,7 +457,7 @@ class AnalysisService:
         offset: int = 0,
         page: Optional[int] = None,
     ) -> PaginatedAnalysisResponse:
-        """Retrieve paginated analyses recorded in the system."""
+        """Retrieve paginated analyses recorded in the system (checking cache first)."""
         limit = max(1, min(100, limit))
 
         if page is not None and offset == 0:
@@ -389,13 +465,19 @@ class AnalysisService:
         else:
             actual_offset = max(0, offset)
 
+        # 1. Check in-memory list cache
+        cached_list = cache_service.get_list(limit, actual_offset)
+        if cached_list:
+            return cached_list
+
+        # 2. Query repository
         summaries = self.database_service.list_analyses(limit=limit, offset=actual_offset)
         total = self.database_service.count_analyses()
 
         computed_page = (actual_offset // limit) + 1
         total_pages = max(1, math.ceil(total / limit)) if total > 0 else 1
 
-        return PaginatedAnalysisResponse(
+        response = PaginatedAnalysisResponse(
             total=total,
             limit=limit,
             offset=actual_offset,
@@ -404,6 +486,16 @@ class AnalysisService:
             page=computed_page,
             total_pages=total_pages,
         )
+
+        # 3. Cache the list result
+        cache_service.set_list(
+            limit,
+            actual_offset,
+            response,
+            ttl_seconds=self.settings.list_cache_ttl_seconds,
+        )
+
+        return response
 
 
 # Global service instance

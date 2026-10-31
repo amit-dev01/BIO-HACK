@@ -199,12 +199,37 @@ class PaginatedAnalysisResponse(BaseModel):
 AnalysisHistoryResponse = PaginatedAnalysisResponse
 
 
-class HealthResponse(BaseModel):
-    """System health and operational status response."""
+class ServiceHealth(BaseModel):
+    """Individual service or external dependency health status."""
 
-    status: str = Field(default="ok", description="Operational status ('ok')")
+    status: str = Field(..., description="Service status ('connected', 'mock', 'error', 'disconnected')")
+    last_check: Optional[datetime] = Field(None, description="Timestamp of the most recent health evaluation")
+
+
+class SystemHealth(BaseModel):
+    """Host machine hardware and runtime telemetry."""
+
+    cpu_percent: float = Field(default=0.0, description="Current CPU utilization percentage (0.0 to 100.0)")
+    memory_percent: float = Field(default=0.0, description="Current RAM memory utilization percentage (0.0 to 100.0)")
+
+
+class HealthResponse(BaseModel):
+    """System health and operational diagnostic response."""
+
+    status: str = Field(default="ok", description="Operational status: 'ok' or 'degraded'")
     version: str = Field(..., description="Active API version")
     timestamp: datetime = Field(..., description="Current server UTC timestamp")
+    uptime_seconds: float = Field(default=0.0, description="Server uptime in seconds since boot")
+    services: Dict[str, ServiceHealth] = Field(
+        default_factory=dict,
+        description="Health states for Earth Engine and Supabase services",
+    )
+    system: SystemHealth = Field(
+        default_factory=SystemHealth,
+        description="Host CPU and RAM resource metrics",
+    )
+
+    # Backward compatibility attributes for Phase 1-4 tests and consumers
     mock_mode: bool = Field(..., description="True if operating in simulated mock mode without satellite credentials")
     environment: str = Field(default="development", description="Runtime environment")
     earth_engine: str = Field(default="mock", description="'connected', 'disconnected', or 'mock'")
@@ -217,3 +242,4 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable explanation of the error")
     details: Optional[Dict[str, Any]] = Field(None, description="Optional diagnostic details or field errors")
+    request_id: Optional[str] = Field(None, description="Unique trace identifier for debugging")
