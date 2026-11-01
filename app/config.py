@@ -37,6 +37,10 @@ class Settings(BaseSettings):
         default="https://canopyai.vercel.app",
         description="Optional single frontend deployment URL added to allowed CORS origins",
     )
+    cors_origin_regex: Optional[str] = Field(
+        default=r"^https?://.*$",
+        description="Regex pattern for allowed CORS origins (allows all Vercel previews, local dev ports, and production)",
+    )
 
     # Operational modes
     mock_mode: bool = Field(

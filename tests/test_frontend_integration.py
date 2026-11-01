@@ -64,6 +64,16 @@ class TestFrontendContractIntegration:
         assert local_res.status_code == 200
         assert local_res.headers.get("access-control-allow-origin") == "http://localhost:3000"
 
+        # Also verify dynamic Vercel preview domains
+        preview_headers = {
+            "Origin": "https://bio-hack-dpl-4bup1ajgg.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        }
+        preview_res = client.options("/api/analyze", headers=preview_headers)
+        assert preview_res.status_code == 200
+        assert preview_res.headers.get("access-control-allow-origin") == "https://bio-hack-dpl-4bup1ajgg.vercel.app"
+
     def test_exact_frontend_request_format(self):
         """Verify that sending the exact frontend payload structure returns 200 and expected schema."""
         res = client.post("/api/analyze", json=FRONTEND_EXACT_PAYLOAD)
