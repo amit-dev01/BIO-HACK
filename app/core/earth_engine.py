@@ -34,7 +34,7 @@ from app.utils.geo import calculate_area_ha, get_centroid, parse_polygon
 logger = logging.getLogger("canopyai.earth_engine")
 
 # Satellite Dataset Identifiers in Google Earth Engine Catalog
-GEDI_L4A_COLLECTION: str = "LARSE/GEDI/GEDI04_A_002"
+GEDI_L4A_COLLECTION: str = "LARSE/GEDI/GEDI04_A_002_MONTHLY"
 GEDI_L2A_COLLECTION: str = "LARSE/GEDI/GEDI02_A_002_MONTHLY"
 SENTINEL_2_COLLECTION: str = "COPERNICUS/S2_SR_HARMONIZED"
 DYNAMIC_WORLD_COLLECTION: str = "GOOGLE/DYNAMICWORLD/V1"
@@ -152,9 +152,26 @@ def initialize_earth_engine(
         else:
             credentials = ee.ServiceAccountCredentials(email, key_file=key_path)
 
-        ee.Initialize(credentials, project=project)
+        try:
+            if project:
+                ee.Initialize(credentials, project=project)
+            else:
+                ee.Initialize(credentials)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Could not initialize Earth Engine with project '%s' (%s). Falling back to direct service account initialization.",
+                project,
+                exc,
+            )
+            try:
+                ee.Initialize(credentials)
+            except Exception as fallback_exc:
+                _EE_INITIALIZED = False
+                logger.error("Failed to initialize Google Earth Engine: %s", fallback_exc)
+                raise RuntimeError(f"Failed to initialize Earth Engine: {fallback_exc}") from fallback_exc
+
         _EE_INITIALIZED = True
-        logger.info("Google Earth Engine initialized successfully for project: %s", project)
+        logger.info("Google Earth Engine initialized successfully")
     except Exception as exc:
         _EE_INITIALIZED = False
         logger.error("Failed to initialize Google Earth Engine: %s", exc)
