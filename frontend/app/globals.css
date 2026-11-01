@@ -45,3 +45,27 @@
   }
 }
 
+
+
+/* Precision crosshair cursor when custom area drawing is active */
+.drawing-mode .mapboxgl-canvas-container,
+.drawing-mode .mapboxgl-canvas-container.mapboxgl-interactive,
+.drawing-mode .mapboxgl-canvas,
+.drawing-mode .mapboxgl-canvas-container.mapboxgl-interactive:active {
+  cursor: crosshair !important;
+}
+
+/* Ensure Mapbox control containers do not block click events on map elements underneath */
+.mapboxgl-ctrl-top-left,
+.mapboxgl-ctrl-top-right,
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  pointer-events: none;
+}
+
+.mapboxgl-ctrl-top-left > *,
+.mapboxgl-ctrl-top-right > *,
+.mapboxgl-ctrl-bottom-left > *,
+.mapboxgl-ctrl-bottom-right > * {
+  pointer-events: auto;
+}

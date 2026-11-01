@@ -76,6 +76,21 @@ const customDrawStyles = [
       "line-opacity": 0.9,
     },
   },
+  // ACTIVE LINE (during polygon draw before closing)
+  {
+    id: "gl-draw-line-active",
+    type: "line",
+    filter: ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-color": "#15803D",
+      "line-width": 2.5,
+      "line-dasharray": [0.2, 2],
+    },
+  },
   // INACTIVE (static/saved)
   {
     id: "gl-draw-polygon-fill-static",
@@ -117,6 +132,18 @@ const customDrawStyles = [
       "circle-stroke-width": 2,
     },
   },
+  // Active points (during drawing)
+  {
+    id: "gl-draw-point-active",
+    type: "circle",
+    filter: ["all", ["==", "$type", "Point"], ["!=", "mode", "static"]],
+    paint: {
+      "circle-radius": 6,
+      "circle-color": "#FFFFFF",
+      "circle-stroke-color": "#15803D",
+      "circle-stroke-width": 2,
+    },
+  },
   // Midpoints
   {
     id: "gl-draw-polygon-midpoint",
@@ -145,6 +172,7 @@ export function MapView() {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [directoryTab, setDirectoryTab] = useState<"india" | "global">("india");
   const [badgePos, setBadgePos] = useState<{ x: number; y: number } | null>(null);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -305,6 +333,51 @@ export function MapView() {
     setTimeout(() => updateCentroidPosition(polygonFeature), 200);
   }, [dispatch, updateCentroidPosition]);
 
+  // Toggle Custom Polygon Drawing Mode
+  const toggleDrawPolygon = useCallback(() => {
+    if (!drawRef.current || !mapRef.current) return;
+
+    if (isDrawingMode) {
+      // Exit drawing mode
+      drawRef.current.changeMode("simple_select");
+      setIsDrawingMode(false);
+      mapRef.current.doubleClickZoom.enable();
+      if (mapRef.current.getCanvas()) {
+        mapRef.current.getCanvas().style.cursor = "";
+      }
+    } else {
+      // Clear previous polygon and start fresh drawing
+      drawRef.current.deleteAll();
+      dispatch({ type: "CLEAR_POLYGON" });
+      setBadgePos(null);
+
+      drawRef.current.changeMode("draw_polygon");
+      setIsDrawingMode(true);
+      mapRef.current.doubleClickZoom.disable();
+      if (mapRef.current.getCanvas()) {
+        mapRef.current.getCanvas().style.cursor = "crosshair";
+      }
+    }
+  }, [isDrawingMode, dispatch]);
+
+  // Cancel drawing on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isDrawingMode && drawRef.current) {
+        drawRef.current.changeMode("simple_select");
+        setIsDrawingMode(false);
+        if (mapRef.current) {
+          mapRef.current.doubleClickZoom.enable();
+          if (mapRef.current.getCanvas()) {
+            mapRef.current.getCanvas().style.cursor = "";
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDrawingMode]);
+
   // Initialize Mapbox map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -326,10 +399,7 @@ export function MapView() {
 
     const draw = new MapboxDraw({
       displayControlsDefault: false,
-      controls: {
-        polygon: true,
-        trash: true,
-      },
+      controls: {}, // Don't render default Mapbox control buttons; our custom toolbar buttons control drawing without overlap
       styles: customDrawStyles,
     });
 
@@ -351,6 +421,12 @@ export function MapView() {
       const feature = e.features[0];
       if (!feature || feature.geometry.type !== "Polygon") return;
 
+      setIsDrawingMode(false);
+      map.doubleClickZoom.enable();
+      if (map.getCanvas()) {
+        map.getCanvas().style.cursor = "";
+      }
+
       const polygon = feature as PolygonData;
       const areaSqMeters = turfArea(polygon);
       const areaHectares = Math.round((areaSqMeters / 10000) * 10) / 10;
@@ -361,13 +437,32 @@ export function MapView() {
     };
 
     const handleDelete = () => {
+      setIsDrawingMode(false);
+      map.doubleClickZoom.enable();
+      if (map.getCanvas()) {
+        map.getCanvas().style.cursor = "";
+      }
       dispatch({ type: "CLEAR_POLYGON" });
       setBadgePos(null);
+    };
+
+    const handleModeChange = (e: { mode: string }) => {
+      const drawing = e.mode === "draw_polygon";
+      setIsDrawingMode(drawing);
+      if (map.getCanvas()) {
+        map.getCanvas().style.cursor = drawing ? "crosshair" : "";
+      }
+      if (drawing) {
+        map.doubleClickZoom.disable();
+      } else {
+        map.doubleClickZoom.enable();
+      }
     };
 
     map.on("draw.create" as any, handleCreateOrUpdate);
     map.on("draw.update" as any, handleCreateOrUpdate);
     map.on("draw.delete" as any, handleDelete);
+    map.on("draw.modechange" as any, handleModeChange);
 
     return () => {
       map.remove();
@@ -444,7 +539,25 @@ export function MapView() {
   };
 
   return (
-    <div className="relative w-full h-full min-h-[400px] overflow-hidden bg-gray-950">
+    <div className={`relative w-full h-full min-h-[400px] overflow-hidden bg-gray-950 ${isDrawingMode ? "drawing-mode" : ""}`}>
+      {/* Active Drawing Guide Banner */}
+      {isDrawingMode && (
+        <div
+          className="absolute top-20 left-1/2 -translate-x-1/2 z-30 bg-gray-900/95 text-white backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-400/80 text-xs font-medium flex items-center gap-3 animate-in fade-in slide-in-from-top-2"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+          <span>Click map to place boundary points • Double-click or click first point to close shape</span>
+          <button
+            type="button"
+            onClick={toggleDrawPolygon}
+            className="px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] border border-white/20 transition-colors"
+          >
+            Cancel (Esc)
+          </button>
+        </div>
+      )}
       {/* Mapbox Canvas */}
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
@@ -650,25 +763,44 @@ export function MapView() {
       )}
 
       {/* Left Toolbar: Drawing & Auto-Select Area */}
-      <div className="absolute top-28 left-4 z-20 flex flex-col gap-2.5">
+      <div
+        className="absolute top-28 left-4 z-20 flex flex-col gap-2.5"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
         {/* Draw Custom Polygon Tool */}
         <button
           type="button"
-          onClick={() => {
-            drawRef.current?.changeMode("draw_polygon");
-          }}
-          className="p-3 rounded-2xl bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 shadow-xl border border-gray-200 transition-all flex items-center gap-2 text-xs font-bold"
-          title="Draw Custom Forest Boundary"
+          onClick={toggleDrawPolygon}
+          className={`p-3 rounded-2xl shadow-xl border transition-all flex items-center gap-2 text-xs font-bold ${
+            isDrawingMode
+              ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600 ring-2 ring-amber-300"
+              : "bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 border-gray-200"
+          }`}
+          title={isDrawingMode ? "Cancel Custom Drawing (Esc)" : "Draw Custom Forest Boundary"}
         >
-          <Pentagon className="w-4 h-4 text-green-600" />
-          <span className="hidden sm:inline">Draw Custom Area</span>
+          {isDrawingMode ? (
+            <>
+              <X className="w-4 h-4 text-white" />
+              <span className="hidden sm:inline">Cancel Drawing</span>
+            </>
+          ) : (
+            <>
+              <Pentagon className="w-4 h-4 text-green-600" />
+              <span className="hidden sm:inline">Draw Custom Area</span>
+            </>
+          )}
         </button>
 
         {/* Auto-Select Area at Center Crosshair */}
         <button
           type="button"
           onClick={autoSelectAreaAtCenter}
-          className="p-3 rounded-2xl bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 shadow-xl border border-gray-200 transition-all flex items-center gap-2 text-xs font-bold"
+          disabled={isDrawingMode}
+          className={`p-3 rounded-2xl bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 shadow-xl border border-gray-200 transition-all flex items-center gap-2 text-xs font-bold ${
+            isDrawingMode ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+          }`}
           title="Auto-select forest boundary at current map center"
         >
           <Crosshair className="w-4 h-4 text-emerald-600" />
@@ -684,7 +816,10 @@ export function MapView() {
               dispatch({ type: "CLEAR_POLYGON" });
               setBadgePos(null);
             }}
-            className="p-3 rounded-2xl bg-white/95 text-red-600 hover:bg-red-50 shadow-xl border border-red-200 transition-all flex items-center gap-2 text-xs font-bold"
+            disabled={isDrawingMode}
+            className={`p-3 rounded-2xl bg-white/95 text-red-600 hover:bg-red-50 shadow-xl border border-red-200 transition-all flex items-center gap-2 text-xs font-bold ${
+              isDrawingMode ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+            }`}
             title="Delete Polygon"
           >
             <Trash2 className="w-4 h-4 text-red-500" />
