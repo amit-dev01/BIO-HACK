@@ -46,11 +46,7 @@ export function Footer() {
                   Analyze Forest
                 </Link>
               </li>
-              <li>
-                <Link href="/pricing" className="hover:text-green-400 transition-colors">
-                  Pricing &amp; Plans
-                </Link>
-              </li>
+
               <li>
                 <Link href="/reports" className="hover:text-green-400 transition-colors">
                   MRV Reports
@@ -126,9 +122,9 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <Link href="/pricing#faq" className="hover:text-green-400 transition-colors">
+                <a href="#methodology" onClick={(e) => { e.preventDefault(); alert("CanopyAI MRV methodology follows IPCC Tier 3 and Verra VCS standards."); }} className="hover:text-green-400 transition-colors">
                   Methodology &amp; Standards
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

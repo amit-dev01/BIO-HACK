@@ -29,15 +29,6 @@ export function Sidebar() {
           <FileText className="h-4 w-4 text-forest" />
           Saved Reports
         </Link>
-        <div className="pt-4 mt-4 border-t border-border">
-          <Link
-            href="/pricing"
-            className="flex items-center gap-3 px-3 py-2 rounded-button text-sm font-medium text-charcoal hover:bg-muted"
-          >
-            <Settings className="h-4 w-4 text-slate" />
-            Plans & Upgrades
-          </Link>
-        </div>
       </nav>
     </aside>
   );

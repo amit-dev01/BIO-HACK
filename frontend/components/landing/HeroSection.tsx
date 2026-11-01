@@ -22,9 +22,6 @@ export function HeroSection() {
               Launch Analysis <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/pricing">View Pricing</Link>
-          </Button>
         </div>
       </div>
     </section>

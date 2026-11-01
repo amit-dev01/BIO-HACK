@@ -40,7 +40,6 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
 
   const navLinks = [
     { label: "Analyze", href: "/analyze" },
-    { label: "Pricing", href: "/pricing" },
     { label: "Dashboard", href: "/dashboard" },
     { label: "Reports", href: "/reports" },
   ];
