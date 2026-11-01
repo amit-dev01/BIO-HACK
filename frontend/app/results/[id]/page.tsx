@@ -81,12 +81,19 @@ export default function ResultsPage() {
     return fetchedResult;
   }, [state.results, fetchedResult, analysisId]);
 
-  const polygon: PolygonData | null = useMemo(() => {
+  const polygon: PolygonData = useMemo(() => {
     if (state.polygon) {
       return state.polygon;
     }
-    return result?.polygon ?? null;
-  }, [state.polygon, result?.polygon]);
+    if (result?.polygon) {
+      return result.polygon;
+    }
+    return {
+      type: "Feature",
+      properties: { name: result?.forest_type || "Analyzed Area" },
+      geometry: { type: "Polygon", coordinates: [] },
+    };
+  }, [state.polygon, result?.polygon, result?.forest_type]);
 
   if (isLoading) {
     return (

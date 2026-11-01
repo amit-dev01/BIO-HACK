@@ -7,7 +7,7 @@ import { PolygonData } from "@/lib/types";
 import { Layers, Plus, Minus, RotateCcw } from "lucide-react";
 
 interface ResultsMapProps {
-  polygon: PolygonData;
+  polygon?: PolygonData | null;
 }
 
 // 100% Authentic, High-Resolution Global Satellite Imagery (unmetered & reliable)
@@ -43,7 +43,7 @@ export function ResultsMap({ polygon }: ResultsMapProps) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current || !polygon || !polygon.geometry || !polygon.geometry.coordinates || !polygon.geometry.coordinates[0]?.length) return;
 
     mapboxgl.accessToken = token;
 
@@ -262,6 +262,7 @@ export function ResultsMap({ polygon }: ResultsMapProps) {
         <button
           type="button"
           onClick={() => {
+            if (!polygon?.geometry?.coordinates?.[0]?.length) return;
             const coords = polygon.geometry.coordinates[0];
             const bounds = new mapboxgl.LngLatBounds(
               coords[0] as [number, number],
