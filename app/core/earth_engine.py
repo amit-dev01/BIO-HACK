@@ -200,7 +200,16 @@ def _ensure_initialized() -> None:
             return
     except Exception as exc:  # noqa: BLE001
         logger.debug("ee.data.is_initialized check failed: %s", exc)
-    initialize_earth_engine()
+    try:
+        from app.config import get_settings
+        s = get_settings()
+        initialize_earth_engine(
+            project_id=s.gee_project_id,
+            service_account_email=s.effective_gee_email,
+            private_key_path=s.effective_gee_key_path,
+        )
+    except Exception:
+        initialize_earth_engine()
 
 
 # ============================================================================

@@ -915,17 +915,39 @@ export function MapView() {
       {/* Floating "Analyze This Area →" Button (Bottom-Center) */}
       {state.polygon && state.areaHa && state.analysisStatus !== "loading" && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-in slide-in-from-bottom-4 duration-300">
-          <button
-            type="button"
-            onClick={() => runAnalysis()}
-            className="bg-green-600 hover:bg-green-700 text-white rounded-full px-8 py-3.5 font-bold text-sm shadow-2xl shadow-green-950/60 hover:-translate-y-0.5 transition-all flex items-center gap-3 border border-green-400/50 group"
-          >
-            <span>Analyze This Area</span>
-            <span className="font-mono text-xs bg-green-800 px-2.5 py-0.5 rounded-full">
-              {state.areaHa.toLocaleString()} ha
-            </span>
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
-          </button>
+          {state.areaHa < 10.0 ? (
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() =>
+                  alert(
+                    `Selected area is ${state.areaHa} ha. The satellite engine requires at least 10 hectares for statistically verified carbon calculations. Please draw a slightly larger boundary or pick a preset forest.`
+                  )
+                }
+                className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-6 py-3 font-bold text-xs shadow-2xl transition-all flex items-center gap-2.5 border border-amber-400/50"
+              >
+                <span>Area Too Small ({state.areaHa} ha)</span>
+                <span className="font-mono text-[10px] bg-amber-800 px-2 py-0.5 rounded-full">
+                  Min 10 ha
+                </span>
+              </button>
+              <span className="text-[11px] bg-gray-900/90 text-amber-300 px-3 py-1 rounded-full backdrop-blur-sm border border-amber-500/40 font-medium">
+                Tip: Expand polygon to &gt;10 ha to run live satellite analysis
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => runAnalysis()}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-full px-8 py-3.5 font-bold text-sm shadow-2xl shadow-green-950/60 hover:-translate-y-0.5 transition-all flex items-center gap-3 border border-green-400/50 group"
+            >
+              <span>Analyze This Area</span>
+              <span className="font-mono text-xs bg-green-800 px-2.5 py-0.5 rounded-full">
+                {state.areaHa.toLocaleString()} ha
+              </span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </button>
+          )}
         </div>
       )}
     </div>

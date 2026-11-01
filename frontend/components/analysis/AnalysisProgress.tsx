@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TreePine, Check, Loader2, Sparkles } from "lucide-react";
+import { TreePine, Check, Loader2, Sparkles, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useAnalysis } from "@/context/AnalysisContext";
 
 const DID_YOU_KNOW_FACTS = [
@@ -23,7 +23,7 @@ const STEPS = [
 
 export function AnalysisProgress() {
   const router = useRouter();
-  const { state } = useAnalysis();
+  const { state, dispatch } = useAnalysis();
   const { analysisStatus, progressStep, results } = state;
 
   const [factIndex, setFactIndex] = useState(0);
@@ -47,7 +47,7 @@ export function AnalysisProgress() {
     }
   }, [analysisStatus, results, router]);
 
-  if (analysisStatus !== "loading" && analysisStatus !== "complete") {
+  if (analysisStatus !== "loading" && analysisStatus !== "complete" && analysisStatus !== "error") {
     return null;
   }
 
@@ -57,7 +57,36 @@ export function AnalysisProgress() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl p-8 sm:p-12 max-w-lg w-full shadow-2xl text-center relative overflow-hidden border border-gray-100">
-        {isFinished ? (
+        {analysisStatus === "error" ? (
+          /* Error Screen */
+          <div className="py-6 flex flex-col items-center justify-center space-y-4 animate-in zoom-in-90 duration-300">
+            <div className="w-16 h-16 rounded-full bg-red-100 border-4 border-red-500/30 flex items-center justify-center shadow-lg">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Analysis Failed
+            </h2>
+            <div className="bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm p-4 rounded-2xl max-w-sm text-left">
+              <p className="font-semibold mb-1">Issue reported by satellite engine:</p>
+              <p>{state.error || "Could not complete live satellite computation."}</p>
+            </div>
+            <p className="text-xs text-gray-500 max-w-sm">
+              Please adjust your polygon on the map (must be between 10 ha and 100,000 ha) and try again.
+            </p>
+            <div className="pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: "SET_STATUS", payload: "idle" });
+                  dispatch({ type: "SET_ERROR", payload: null });
+                }}
+                className="px-6 py-2.5 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-all flex items-center gap-2 shadow-lg"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Map
+              </button>
+            </div>
+          </div>
+        ) : isFinished ? (
           /* Success Burst Screen */
           <div className="py-8 flex flex-col items-center justify-center space-y-4 animate-in zoom-in-90 duration-300">
             <div className="w-20 h-20 rounded-full bg-green-100 border-4 border-green-500/30 flex items-center justify-center shadow-xl animate-bounce">

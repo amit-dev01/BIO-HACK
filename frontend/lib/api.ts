@@ -1,8 +1,20 @@
 import { AnalysisResult, PolygonData } from "./types";
-import { mockNdviTrend, mockAnalysisResult } from "./mock-data";
+import { mockNdviTrend } from "./mock-data";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://bio-hack.onrender.com";
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    return "http://localhost:8000";
+  }
+  return "https://bio-hack.onrender.com";
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Normalizes backend API response into frontend AnalysisResult
 export function normalizeAnalysisResponse(
@@ -10,7 +22,7 @@ export function normalizeAnalysisResponse(
   fallbackPolygon?: PolygonData
 ): AnalysisResult {
   // Normalize polygon into GeoJSON Feature
-  let normalizedPolygon: PolygonData = fallbackPolygon || mockAnalysisResult.polygon;
+  let normalizedPolygon: PolygonData = fallbackPolygon || { type: "Feature", properties: { name: raw.forest_type || "Analyzed Area" }, geometry: raw.polygon || { type: "Polygon", coordinates: [] } };
   if (raw.polygon) {
     if (raw.polygon.type === "Feature") {
       normalizedPolygon = raw.polygon;
@@ -82,7 +94,7 @@ export function normalizeAnalysisResponse(
 export const api = {
   // Check backend health
   async checkHealth() {
-    const res = await fetch(`${API_BASE_URL}/api/health`);
+    const res = await fetch(`${getApiBaseUrl()}/api/health`);
     if (!res.ok) throw new Error(`Health check failed: ${res.statusText}`);
     return res.json();
   },
@@ -97,7 +109,7 @@ export const api = {
       analysis_type: analysisType || "detailed",
     };
 
-    const res = await fetch(`${API_BASE_URL}/api/analyze`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -105,7 +117,12 @@ export const api = {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || err.detail || `Analysis failed (${res.status})`);
+      const msg =
+        err.message ||
+        err.detail ||
+        (typeof err.error === "string" ? err.error : null) ||
+        `Analysis failed (${res.status})`;
+      throw new Error(msg);
     }
 
     const data = await res.json();
@@ -114,7 +131,7 @@ export const api = {
 
   // Get single analysis by ID
   async getAnalysisById(id: string): Promise<AnalysisResult> {
-    const res = await fetch(`${API_BASE_URL}/api/analyze/${id}`);
+    const res = await fetch(`${getApiBaseUrl()}/api/analyze/${id}`);
     if (!res.ok) {
       throw new Error(`Analysis not found: ${res.status}`);
     }
@@ -125,7 +142,7 @@ export const api = {
   // List analyses history
   async listAnalyses(limit = 20, offset = 0) {
     const res = await fetch(
-      `${API_BASE_URL}/api/analyses?limit=${limit}&offset=${offset}`
+      `${getApiBaseUrl()}/api/analyses?limit=${limit}&offset=${offset}`
     );
     if (!res.ok) {
       throw new Error(`Failed to list analyses: ${res.status}`);
@@ -135,7 +152,7 @@ export const api = {
 
   // Get download report URL
   getReportPdfUrl(analysisId: string) {
-    return `${API_BASE_URL}/api/reports/${analysisId}/download`;
+    return `${getApiBaseUrl()}/api/reports/${analysisId}/download`;
   },
 
   // Upload drone image
@@ -143,7 +160,7 @@ export const api = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`${API_BASE_URL}/api/drone/upload`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/drone/upload`, {
       method: "POST",
       body: formData,
     });

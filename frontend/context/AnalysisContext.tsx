@@ -13,7 +13,6 @@ import {
   AnalysisStatus,
   PolygonData,
 } from "@/lib/types";
-import { mockAnalysisResult } from "@/lib/mock-data";
 import { api } from "@/lib/api";
 
 export interface AnalysisState {
@@ -178,41 +177,47 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const runAnalysis = useCallback(async () => {
+    if (!state.polygon) {
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Please select or draw a forest area on the map before running analysis.",
+      });
+      dispatch({ type: "SET_STATUS", payload: "error" });
+      return;
+    }
+
+    if (state.areaHa && state.areaHa < 10.0) {
+      dispatch({
+        type: "SET_ERROR",
+        payload: `The selected area (${state.areaHa} ha) is below the minimum required boundary threshold of 10.0 hectares for satellite estimation. Please draw or select a larger boundary.`,
+      });
+      dispatch({ type: "SET_STATUS", payload: "error" });
+      return;
+    }
+
     dispatch({ type: "SET_STATUS", payload: "loading" });
     dispatch({ type: "SET_ERROR", payload: null });
     dispatch({ type: "SET_PROGRESS_STEP", payload: 1 });
 
-    const targetPolygon = state.polygon ?? mockAnalysisResult.polygon;
+    let progressTimer: NodeJS.Timeout | null = null;
 
     try {
       // Step interval timer to animate visual progress
-      const progressTimer = setInterval(() => {
+      progressTimer = setInterval(() => {
         dispatch({
           type: "SET_PROGRESS_STEP",
           payload: Math.min(4, Math.floor(Date.now() / 1500) % 4 + 1),
         });
       }, 1200);
 
-      let realResult: AnalysisResult;
-      try {
-        // Call real backend on Render
-        realResult = await api.analyze(
-          targetPolygon,
-          state.analysisConfig.data_sources,
-          state.analysisConfig.analysis_type
-        );
-      } catch (backendErr) {
-        console.warn("Backend API call failed, falling back to simulated model:", backendErr);
-        realResult = {
-          ...mockAnalysisResult,
-          analysis_id: `cai_anlz_${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          polygon: targetPolygon,
-          area_ha: state.areaHa ?? mockAnalysisResult.area_ha,
-        };
-      } finally {
-        clearInterval(progressTimer);
-      }
+      // Call real backend API for live computation
+      const realResult = await api.analyze(
+        state.polygon,
+        state.analysisConfig.data_sources,
+        state.analysisConfig.analysis_type
+      );
+
+      if (progressTimer) clearInterval(progressTimer);
 
       dispatch({ type: "SET_PROGRESS_STEP", payload: 5 });
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -220,10 +225,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_RESULTS", payload: realResult });
       dispatch({ type: "SET_STATUS", payload: "complete" });
     } catch (err) {
+      if (progressTimer) clearInterval(progressTimer);
+      const errorMsg =
+        err instanceof Error ? err.message : "Analysis calculation failed";
       dispatch({
         type: "SET_ERROR",
-        payload:
-          err instanceof Error ? err.message : "An unexpected error occurred",
+        payload: errorMsg,
       });
       dispatch({ type: "SET_STATUS", payload: "error" });
     }
