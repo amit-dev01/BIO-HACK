@@ -3,6 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AnalysisProvider } from "@/context/AnalysisContext";
+import { AnimationProvider } from "@/context/AnimationContext";
+import { GlobalFloatingLeaves } from "@/components/ambient/GlobalFloatingLeaves";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,12 +36,16 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
     >
-      <body className="min-h-screen bg-background font-sans text-charcoal">
-        <AuthProvider>
-          <AnalysisProvider>{children}</AnalysisProvider>
-        </AuthProvider>
+      <body className="min-h-screen bg-background font-sans text-charcoal relative">
+        <AnimationProvider>
+          <AuthProvider>
+            <AnalysisProvider>
+              <GlobalFloatingLeaves />
+              {children}
+            </AnalysisProvider>
+          </AuthProvider>
+        </AnimationProvider>
       </body>
     </html>
   );
 }
-

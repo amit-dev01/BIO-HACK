@@ -32,7 +32,7 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "gemini",
-      text: `Hello! I have analyzed the spaceborne telemetry for this ${result.forest_type || "forest"} tract (${(result.area_ha || 0).toLocaleString()} ha). Ask me anything about its biomass, carbon permanence, or Verra VCS registry compliance!`,
+      text: `Hello! I have analyzed the spaceborne telemetry for this ${result.forest_type || "forest"} tract (${(result.area_ha || 0).toLocaleString("en-US")} ha). Ask me anything about its biomass, carbon permanence, or Verra VCS registry compliance!`,
     },
   ]);
   const [inputQuestion, setInputQuestion] = useState("");
@@ -99,24 +99,27 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
   ];
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-6">
+    <div className="crystal-glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 text-white space-y-6 relative overflow-hidden">
+      {/* Top Specular Shimmer */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-5">
+      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-white/10 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 flex items-center justify-center text-white shadow-lg shadow-green-600/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-purple-600/30 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-xl shadow-emerald-950/50">
             <Sparkles className="w-6 h-6 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">
                 AI Ecological Audit &amp; Verification Narrative
               </h2>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-ping" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-400/40 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
                 Gemini 3.8 Flash
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-white/60 mt-0.5">
               Grounded in NASA GEDI LiDAR &amp; Sentinel-2 spaceborne telemetry
             </p>
           </div>
@@ -126,36 +129,36 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
       {/* Narrative Section */}
       {isLoadingNarrative ? (
         <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-          <p className="text-xs font-medium text-gray-500">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+          <p className="text-xs font-medium text-emerald-200/80">
             Gemini 3.8 Flash is analyzing spaceborne telemetry...
           </p>
         </div>
       ) : narrative ? (
         <div className="space-y-5">
           {/* Executive Summary */}
-          <div className="bg-gradient-to-br from-green-50/60 to-emerald-50/30 p-5 rounded-2xl border border-green-100 text-sm leading-relaxed text-gray-800">
+          <div className="bg-emerald-500/15 p-5 rounded-2xl border border-emerald-400/30 text-sm leading-relaxed text-emerald-100 shadow-inner">
             <p>{narrative.executive_summary}</p>
           </div>
 
           {/* 2-Column Evaluation Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/70 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>Carbon Permanence &amp; Risk</span>
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
+              <p className="text-xs text-white/80 leading-relaxed">
                 {narrative.permanence_and_risk}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/70 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider">
-                <FileCheck2 className="w-4 h-4 text-blue-600" />
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-purple-300 uppercase tracking-wider">
+                <FileCheck2 className="w-4 h-4 text-purple-400" />
                 <span>Registry Compliance &amp; PDD Viability</span>
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
+              <p className="text-xs text-white/80 leading-relaxed">
                 {narrative.registry_compliance}
               </p>
             </div>
@@ -167,9 +170,9 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
               {narrative.key_highlights.map((highlight: string, idx: number) => (
                 <div
                   key={idx}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-100/60 text-green-900 text-xs font-semibold border border-green-200/80"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-200 text-xs font-semibold border border-emerald-400/30 shadow-xs"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-700" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{highlight}</span>
                 </div>
               ))}
@@ -177,8 +180,8 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
           )}
 
           {narrative.notice && (
-            <div className="text-[11px] text-gray-400 flex items-center gap-1.5 pt-1">
-              <Info className="w-3.5 h-3.5 shrink-0" />
+            <div className="text-[11px] text-white/50 flex items-center gap-1.5 pt-1">
+              <Info className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
               <span>{narrative.notice}</span>
             </div>
           )}
@@ -186,15 +189,15 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
       ) : null}
 
       {/* Interactive Chat with Forest Assistant */}
-      <div className="border-t border-gray-100 pt-6 space-y-4">
+      <div className="border-t border-white/10 pt-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-purple-600" />
-            <h3 className="text-sm font-bold text-gray-900">
+            <Bot className="w-5 h-5 text-purple-400" />
+            <h3 className="text-sm font-bold text-white tracking-tight">
               Ask Gemini About This Forest
             </h3>
           </div>
-          <span className="text-[11px] text-gray-400 font-mono">
+          <span className="text-[11px] text-white/50 font-mono">
             Telemetry Grounded Q&amp;A
           </span>
         </div>
@@ -207,7 +210,7 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
               type="button"
               onClick={() => handleSendMessage(q)}
               disabled={isSending}
-              className="text-[11px] px-3 py-1.5 rounded-full bg-gray-100 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-gray-200 text-gray-700 transition-colors text-left"
+              className="text-[11px] px-3 py-1.5 rounded-full bg-white/10 hover:bg-emerald-500/25 hover:text-emerald-200 hover:border-emerald-400/40 border border-white/15 text-white/80 transition-all text-left shadow-xs"
             >
               &ldquo;{q}&rdquo;
             </button>
@@ -215,7 +218,7 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
         </div>
 
         {/* Chat History Box */}
-        <div className="max-h-60 overflow-y-auto space-y-3 p-4 rounded-2xl bg-gray-50/80 border border-gray-200 text-xs">
+        <div className="max-h-60 overflow-y-auto space-y-3 p-4 rounded-2xl bg-black/40 border border-white/15 text-xs shadow-inner">
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -224,29 +227,29 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
               }`}
             >
               {msg.sender === "gemini" && (
-                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-full bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0 mt-0.5">
                   <Bot className="w-3.5 h-3.5" />
                 </div>
               )}
               <div
                 className={`max-w-[85%] p-3 rounded-2xl ${
                   msg.sender === "user"
-                    ? "bg-green-600 text-white rounded-tr-none"
-                    : "bg-white text-gray-800 shadow-sm border border-gray-200 rounded-tl-none leading-relaxed"
+                    ? "bg-emerald-600 text-white rounded-tr-none shadow-md"
+                    : "bg-white/10 text-white shadow-sm border border-white/15 rounded-tl-none leading-relaxed"
                 }`}
               >
                 {msg.text}
               </div>
               {msg.sender === "user" && (
-                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-700 shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/25 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 mt-0.5">
                   <User className="w-3.5 h-3.5" />
                 </div>
               )}
             </div>
           ))}
           {isSending && (
-            <div className="flex gap-2.5 items-center text-gray-400 text-xs italic">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+            <div className="flex gap-2.5 items-center text-emerald-300 text-xs italic">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
               <span>Gemini is thinking...</span>
             </div>
           )}
@@ -266,12 +269,12 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
             onChange={(e) => setInputQuestion(e.target.value)}
             placeholder="Ask a question (e.g. 'What is the fire risk here?')..."
             disabled={isSending}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-xs bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-white/20 text-xs bg-black/30 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent backdrop-blur-md"
           />
           <button
             type="submit"
             disabled={!inputQuestion.trim() || isSending}
-            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-md"
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-lg shadow-purple-950/50"
           >
             <span>Ask</span>
             <Send className="w-3.5 h-3.5" />
@@ -283,4 +286,3 @@ export function AiEcologicalSummary({ result }: AiEcologicalSummaryProps) {
 }
 
 export default AiEcologicalSummary;
-

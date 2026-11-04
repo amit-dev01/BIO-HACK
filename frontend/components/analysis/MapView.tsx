@@ -9,7 +9,10 @@ import turfArea from "@turf/area";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { PolygonData } from "@/lib/types";
 import { FOREST_DIRECTORY, ForestLocation } from "@/lib/forest-directory";
+import { SatelliteScanOverlay } from "./SatelliteScanOverlay";
+import { PolygonCelebrationLayer } from "./PolygonCelebrationLayer";
 import {
+  TreePine,
   Search,
   Plus,
   Minus,
@@ -165,7 +168,7 @@ export function MapView() {
 
   const { state, dispatch, runAnalysis } = useAnalysis();
 
-  const [activeBasemap, setActiveBasemap] = useState<"esri" | "mapbox">("esri");
+  const [activeBasemap, setActiveBasemap] = useState<"esri" | "carto" | "mapbox">("esri");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -307,7 +310,10 @@ export function MapView() {
 
     const polygonFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
       type: "Feature",
-      properties: { name: `Selected Forest Plot (${center.lat.toFixed(2)}°, ${center.lng.toFixed(2)}°)` },
+      properties: { name: `Selected Forest Plot (${center.lat.toFixed(2)}°, ${center.lng.toFixed(2)}°)`,
+        forest_type: Math.abs(center.lat) < 18 ? "Tropical Wet Evergreen Rainforest" : Math.abs(center.lat) < 32 ? "Sub-Tropical Moist Deciduous Forest" : "Temperate Coniferous Forest",
+        ecoregion: "Global Biosphere Reserve",
+      },
       geometry: {
         type: "Polygon",
         coordinates: [
@@ -428,6 +434,9 @@ export function MapView() {
       }
 
       const polygon = feature as PolygonData;
+      if (!polygon.properties) polygon.properties = {};
+      if (!polygon.properties.forest_type) polygon.properties.forest_type = "Tropical Wet Evergreen Rainforest";
+      if (!polygon.properties.name) polygon.properties.name = "Custom Forest Plot";
       const areaSqMeters = turfArea(polygon);
       const areaHectares = Math.round((areaSqMeters / 10000) * 10) / 10;
 
@@ -560,6 +569,10 @@ export function MapView() {
       )}
       {/* Mapbox Canvas */}
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+      {/* Animation 4: Active Satellite Scanning Overlay */}
+      <SatelliteScanOverlay />
+      {/* Animation 5: Polygon Draw Celebration Burst & Centroid Badge */}
+      <PolygonCelebrationLayer centroid={badgePos} areaHa={state.areaHa} />
 
       {/* Top Center: Search Bar & Forest Index Explorer */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 max-w-xl w-full px-4">
@@ -574,7 +587,7 @@ export function MapView() {
               }}
               onFocus={() => setIsDropdownOpen(true)}
               placeholder="Search any forest in India or World (e.g. Western Ghats, Sundarbans, Corbett, Amazon)..."
-              className="w-full pl-10 pr-32 py-3 text-xs sm:text-sm bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600 shadow-xl"
+              className="w-full pl-10 pr-32 py-3 text-xs sm:text-sm glass-panel-dark rounded-2xl border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xl"
             />
             <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400" />
 
@@ -582,7 +595,7 @@ export function MapView() {
               <button
                 type="button"
                 onClick={() => setIsDirectoryOpen(true)}
-                className="px-2.5 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 text-xs font-semibold rounded-xl border border-green-200 transition-colors flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-white/10 text-emerald-300 hover:bg-white/20 text-xs font-semibold rounded-xl border border-white/20 transition-colors flex items-center gap-1"
                 title="Browse Forest Directory"
               >
                 <BookOpen className="w-3.5 h-3.5" />
@@ -602,7 +615,7 @@ export function MapView() {
           {/* Autocomplete Dropdown List */}
           {isDropdownOpen && autocompleteResults.length > 0 && (
             <div
-              className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-40 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150"
+              className="absolute top-full left-0 right-0 mt-2 glass-panel-dark text-white rounded-2xl shadow-2xl border border-white/20 overflow-hidden z-40 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150"
               onMouseLeave={() => setIsDropdownOpen(false)}
             >
               <div className="p-2 border-b border-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 flex items-center justify-between">
@@ -675,7 +688,7 @@ export function MapView() {
       {/* Forest Directory Modal Dialog */}
       {isDirectoryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 flex flex-col max-h-[85vh] overflow-hidden">
+          <div className="glass-panel-dark text-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-white/20 flex flex-col max-h-[85vh] overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-green-50 text-green-700">
@@ -776,7 +789,7 @@ export function MapView() {
           className={`p-3 rounded-2xl shadow-xl border transition-all flex items-center gap-2 text-xs font-bold ${
             isDrawingMode
               ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600 ring-2 ring-amber-300"
-              : "bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 border-gray-200"
+              : "glass-panel-dark text-white hover:text-emerald-300 hover:bg-black/80 border-white/20"
           }`}
           title={isDrawingMode ? "Cancel Custom Drawing (Esc)" : "Draw Custom Forest Boundary"}
         >
@@ -798,7 +811,7 @@ export function MapView() {
           type="button"
           onClick={autoSelectAreaAtCenter}
           disabled={isDrawingMode}
-          className={`p-3 rounded-2xl bg-white/95 text-gray-800 hover:text-green-700 hover:bg-green-50 shadow-xl border border-gray-200 transition-all flex items-center gap-2 text-xs font-bold ${
+          className={`p-3 rounded-2xl glass-panel-dark text-white hover:text-emerald-300 hover:bg-black/80 shadow-2xl border border-white/20 transition-all flex items-center gap-2 text-xs font-bold ${
             isDrawingMode ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
           }`}
           title="Auto-select forest boundary at current map center"
@@ -817,7 +830,7 @@ export function MapView() {
               setBadgePos(null);
             }}
             disabled={isDrawingMode}
-            className={`p-3 rounded-2xl bg-white/95 text-red-600 hover:bg-red-50 shadow-xl border border-red-200 transition-all flex items-center gap-2 text-xs font-bold ${
+            className={`p-3 rounded-2xl glass-panel-dark text-red-400 hover:bg-red-950/40 shadow-2xl border border-red-500/30 transition-all flex items-center gap-2 text-xs font-bold ${
               isDrawingMode ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
             }`}
             title="Delete Polygon"
@@ -907,7 +920,14 @@ export function MapView() {
         >
           <div className="bg-gray-900/90 text-white backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-2xl border border-green-500/60 font-mono text-xs font-bold flex items-center gap-2 animate-in fade-in zoom-in-75">
             <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-            <span>{state.areaHa.toLocaleString()} ha</span>
+            <div className="flex flex-col text-left">
+              {state.polygon?.properties?.forest_type && (
+                <span className="text-[10px] font-sans text-emerald-300 font-semibold tracking-wide">
+                  {state.polygon.properties.forest_type}
+                </span>
+              )}
+              <span>{state.areaHa.toLocaleString()} ha</span>
+            </div>
           </div>
         </div>
       )}
@@ -942,7 +962,12 @@ export function MapView() {
               className="bg-green-600 hover:bg-green-700 text-white rounded-full px-8 py-3.5 font-bold text-sm shadow-2xl shadow-green-950/60 hover:-translate-y-0.5 transition-all flex items-center gap-3 border border-green-400/50 group"
             >
               <span>Analyze This Area</span>
-              <span className="font-mono text-xs bg-green-800 px-2.5 py-0.5 rounded-full">
+              {state.polygon?.properties?.forest_type && (
+                <span className="text-xs font-semibold bg-emerald-900/90 text-emerald-200 px-2.5 py-0.5 rounded-full border border-emerald-500/40 hidden sm:inline-block">
+                  {state.polygon.properties.forest_type}
+                </span>
+              )}
+              <span className="font-mono text-xs bg-emerald-800 px-2.5 py-0.5 rounded-full">
                 {state.areaHa.toLocaleString()} ha
               </span>
               <span className="group-hover:translate-x-1 transition-transform">→</span>

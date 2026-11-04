@@ -18,13 +18,6 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Auto-detect if on landing page and should be transparent before scroll
-  const isLanding = pathname === "/";
-  const isTransparent =
-    propTransparent !== undefined
-      ? propTransparent
-      : isLanding && !scrolled;
-
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -47,30 +40,25 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 h-16 transition-colors duration-200",
-        isTransparent
-          ? "bg-transparent text-white border-transparent"
-          : "bg-white/90 backdrop-blur-md text-gray-900 border-b border-gray-200 shadow-xs"
+        "fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300",
+        scrolled
+          ? "bg-[#061B0B]/80 backdrop-blur-2xl border-b border-white/15 text-white shadow-xl shadow-black/25"
+          : "bg-black/35 backdrop-blur-xl border-b border-white/10 text-white"
       )}
     >
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Left: Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="p-1.5 rounded-lg bg-green-50 text-forest group-hover:bg-green-100 transition-colors">
-            <TreePine className="h-6 w-6 text-[#1B5E20]" />
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="p-1.5 rounded-xl bg-green-500/20 border border-green-400/30 text-green-300 group-hover:bg-green-500/30 transition-all shadow-inner">
+            <TreePine className="h-6 w-6 text-emerald-400" />
           </div>
-          <span
-            className={cn(
-              "font-bold text-xl tracking-tight font-sans transition-colors",
-              isTransparent ? "text-white" : "text-[#1B5E20]"
-            )}
-          >
+          <span className="font-bold text-xl tracking-tight text-white drop-shadow-sm font-sans">
             CanopyAI
           </span>
         </Link>
 
         {/* Center: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-2">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -78,14 +66,10 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "text-sm font-medium transition-colors duration-150 py-1",
-                  isTransparent
-                    ? isActive
-                      ? "text-white border-b-2 border-white"
-                      : "text-white/80 hover:text-white"
-                    : isActive
-                    ? "text-green-700 font-semibold border-b-2 border-green-600"
-                    : "text-gray-600 hover:text-green-600"
+                  "text-sm font-medium transition-all duration-150 px-3.5 py-1.5 rounded-xl",
+                  isActive
+                    ? "bg-white/15 text-white border border-white/20 shadow-xs"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
                 )}
               >
                 {link.label}
@@ -95,29 +79,31 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
         </nav>
 
         {/* Right: Authentication or User Profile */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2.5 p-1 rounded-full hover:ring-2 hover:ring-green-500/40 transition-all"
+                className="flex items-center gap-2.5 p-1 px-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
               >
                 {user?.avatar_url ? (
                   <img
                     src={user.avatar_url}
                     alt={user.full_name || "User Avatar"}
-                    className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-xs"
+                    className="w-7 h-7 rounded-full object-cover border border-white/30"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-green-700 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                     {user?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
                   </div>
                 )}
+                <span className="text-xs font-medium text-white max-w-[120px] truncate">
+                  {user?.full_name || "User"}
+                </span>
                 <ChevronDown
                   className={cn(
-                    "w-4 h-4 transition-transform",
-                    isTransparent ? "text-white/80" : "text-gray-500",
+                    "w-3.5 h-3.5 text-white/80 transition-transform",
                     userDropdownOpen && "rotate-180"
                   )}
                 />
@@ -126,41 +112,41 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
               {/* User Dropdown Menu */}
               {userDropdownOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 text-gray-800 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute right-0 mt-2 w-56 rounded-2xl glass-panel-dark py-2 z-50 text-white animate-in fade-in zoom-in-95 duration-150"
                   onMouseLeave={() => setUserDropdownOpen(false)}
                 >
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-900 truncate">
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-xs font-semibold text-white truncate">
                       {user?.full_name || "Canopy Researcher"}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-300 truncate">{user?.email}</p>
                   </div>
 
                   <Link
                     href="/dashboard"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-200 hover:bg-white/15 hover:text-white transition-colors"
                   >
-                    <LayoutDashboard className="w-4 h-4 text-gray-400" />
+                    <LayoutDashboard className="w-4 h-4 text-emerald-400" />
                     Dashboard
                   </Link>
                   <Link
                     href="/dashboard?tab=settings"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-200 hover:bg-white/15 hover:text-white transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-gray-400" />
+                    <Settings className="w-4 h-4 text-emerald-400" />
                     Settings
                   </Link>
 
-                  <div className="border-t border-gray-100 mt-1 pt-1">
+                  <div className="border-t border-white/10 mt-1 pt-1">
                     <button
                       type="button"
                       onClick={() => {
                         setUserDropdownOpen(false);
                         signOut();
                       }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors text-left"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -170,21 +156,16 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <Link
                 href="/login"
-                className={cn(
-                  "text-sm font-medium px-3 py-1.5 transition-colors",
-                  isTransparent
-                    ? "text-white/90 hover:text-white"
-                    : "text-gray-700 hover:text-green-700"
-                )}
+                className="text-sm font-medium px-3.5 py-1.5 text-white/85 hover:text-white hover:bg-white/10 rounded-xl transition-all"
               >
                 Log In
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg shadow-emerald-950/40 border border-emerald-400/30 transition-all hover:scale-105 active:scale-95"
               >
                 Get Started
               </Link>
@@ -197,10 +178,7 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              isTransparent ? "text-white hover:bg-white/10" : "text-gray-700 hover:bg-gray-100"
-            )}
+            className="p-2 rounded-xl text-white hover:bg-white/10 transition-colors"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -210,8 +188,8 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
 
       {/* Mobile Slide-Out Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 pt-3 pb-6 shadow-xl animate-in slide-in-from-top-4 duration-200">
-          <nav className="flex flex-col space-y-3">
+        <div className="md:hidden glass-panel-dark px-4 pt-3 pb-6 border-b border-white/15 shadow-2xl animate-in slide-in-from-top-4 duration-200">
+          <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -220,10 +198,10 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                    "text-sm font-medium px-3 py-2 rounded-xl transition-colors",
                     isActive
-                      ? "bg-green-50 text-green-700 font-semibold"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-green-700"
+                      ? "bg-white/20 text-white font-semibold"
+                      : "text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   {link.label}
@@ -232,24 +210,16 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
             })}
           </nav>
 
-          <div className="border-t border-gray-200 mt-4 pt-4">
+          <div className="border-t border-white/10 mt-4 pt-4">
             {isAuthenticated ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3 px-3">
-                  {user?.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt={user.full_name || "User"}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-green-700 text-white flex items-center justify-center font-bold text-xs">
-                      {user?.full_name?.charAt(0) || "U"}
-                    </div>
-                  )}
+                  <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
+                    {user?.full_name?.charAt(0) || "U"}
+                  </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-900">{user?.full_name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-xs font-semibold text-white">{user?.full_name}</p>
+                    <p className="text-xs text-gray-300">{user?.email}</p>
                   </div>
                 </div>
 
@@ -257,7 +227,7 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-xs text-gray-600 hover:text-green-700 py-1"
+                    className="text-xs text-gray-200 hover:text-white py-1"
                   >
                     Dashboard
                   </Link>
@@ -267,7 +237,7 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
                       setMobileMenuOpen(false);
                       signOut();
                     }}
-                    className="text-left text-xs text-red-600 hover:text-red-700 py-1"
+                    className="text-left text-xs text-red-400 hover:text-red-300 py-1"
                   >
                     Sign Out
                   </button>
@@ -278,14 +248,14 @@ export function Navbar({ transparent: propTransparent }: NavbarProps) {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center text-sm font-medium text-gray-700 border border-gray-200 py-2 rounded-lg hover:bg-gray-50"
+                  className="w-full text-center text-sm font-medium text-white border border-white/20 py-2 rounded-xl hover:bg-white/10"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/login?mode=signup"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center bg-green-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-green-700 shadow-sm"
+                  className="w-full text-center bg-emerald-600 text-white text-sm font-semibold py-2 rounded-xl hover:bg-emerald-500 shadow-md"
                 >
                   Get Started
                 </Link>

@@ -208,7 +208,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
           type: "SET_PROGRESS_STEP",
           payload: Math.min(4, Math.floor(Date.now() / 1500) % 4 + 1),
         });
-      }, 1200);
+      }, 650);
 
       // Call real backend API for live computation
       const realResult = await api.analyze(
@@ -220,7 +220,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       if (progressTimer) clearInterval(progressTimer);
 
       dispatch({ type: "SET_PROGRESS_STEP", payload: 5 });
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       dispatch({ type: "SET_RESULTS", payload: realResult });
       dispatch({ type: "SET_STATUS", payload: "complete" });

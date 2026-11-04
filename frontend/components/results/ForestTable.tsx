@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { TreePine, AlertCircle, CheckCircle2 } from "lucide-react";
+import { TreePine, AlertCircle, CheckCircle2, Trees, Sparkles } from "lucide-react";
 import { AnalysisResult } from "@/lib/types";
 import {
   Table,
@@ -21,7 +21,17 @@ export function ForestTable({ result }: ForestTableProps) {
   const isLossLow = lossRate < 1.0;
 
   const rows = [
-    { metric: "Forest Type", value: result.forest_type || "Tropical Moist Broadleaf", isMono: false },
+    {
+      metric: "Forest Type",
+      value: result.forest_type || "Tropical Wet Evergreen Rainforest",
+      isMono: false,
+      customRenderer: (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-bold shadow-xs">
+          <TreePine className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span>{result.forest_type || "Tropical Wet Evergreen Rainforest"}</span>
+        </span>
+      ),
+    },
     { metric: "Ecoregion", value: result.ecoregion || "Tapajós-Xingu Moist Forests", isMono: false },
     {
       metric: "Mean Canopy Height",
@@ -58,15 +68,15 @@ export function ForestTable({ result }: ForestTableProps) {
       value: `${lossRate.toFixed(2)}%`,
       isMono: true,
       customRenderer: (
-        <div className="flex items-center gap-1.5 font-mono">
-          <span>{lossRate.toFixed(2)}%</span>
+        <div className="flex items-center gap-2 font-mono">
+          <span className="text-white font-bold">{lossRate.toFixed(2)}%</span>
           {isLossLow ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-sans text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-              <CheckCircle2 className="w-3 h-3 text-green-600" /> Stable
+            <span className="inline-flex items-center gap-1 text-[11px] font-sans text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Stable
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] font-sans text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-              <AlertCircle className="w-3 h-3 text-red-600" /> Alert
+            <span className="inline-flex items-center gap-1 text-[11px] font-sans text-red-300 bg-red-500/20 px-2 py-0.5 rounded-full border border-red-400/30">
+              <AlertCircle className="w-3 h-3 text-red-400" /> Alert
             </span>
           )}
         </div>
@@ -75,19 +85,19 @@ export function ForestTable({ result }: ForestTableProps) {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+    <div className="crystal-glass-card rounded-3xl shadow-2xl border border-white/20 overflow-hidden text-white">
       {/* Card Header */}
-      <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-green-50 text-green-700 border border-green-200/60">
-            <TreePine className="w-5 h-5 text-green-600" />
+      <div className="p-6 sm:p-7 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/30 shadow-inner">
+            <Trees className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 text-lg tracking-tight">
-              Forest Characteristics
+            <h3 className="font-bold text-white text-lg tracking-tight">
+              Forest Biometric Characteristics
             </h3>
-            <p className="text-xs text-gray-400">
-              Spaceborne LiDAR & IPCC Tier-3 biometric parameters
+            <p className="text-xs text-white/60">
+              Spaceborne LiDAR &amp; IPCC Tier-3 biometric parameters
             </p>
           </div>
         </div>
@@ -96,34 +106,34 @@ export function ForestTable({ result }: ForestTableProps) {
       {/* Styled Data Table with alternating row backgrounds */}
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50/80">
-            <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider">
-              Metric
+          <TableRow className="border-b border-white/10 hover:bg-transparent">
+            <TableHead className="font-bold text-emerald-300 text-xs uppercase tracking-wider py-3.5 pl-6">
+              Biometric Metric
             </TableHead>
-            <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider text-right">
-              Value
+            <TableHead className="font-bold text-emerald-300 text-xs uppercase tracking-wider py-3.5 pr-6 text-right">
+              Calculated Value
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, idx) => (
+          {rows.map((row, index) => (
             <TableRow
-              key={row.metric}
-              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+              key={index}
+              className={`border-b border-white/5 transition-colors ${
+                index % 2 === 0 ? "bg-white/[0.02]" : "bg-transparent"
+              } hover:bg-white/[0.06]`}
             >
-              <TableCell className="font-medium text-gray-700 text-sm">
+              <TableCell className="font-medium text-white/90 text-sm py-3.5 pl-6">
                 {row.metric}
               </TableCell>
-              <TableCell className="text-right text-sm">
+              <TableCell className="text-right py-3.5 pr-6">
                 {row.customRenderer ? (
-                  <div className="flex justify-end">{row.customRenderer}</div>
+                  <div className="inline-block">{row.customRenderer}</div>
                 ) : (
                   <span
-                    className={
-                      row.isMono
-                        ? "font-mono font-semibold text-gray-900"
-                        : "text-gray-900"
-                    }
+                    className={`text-sm text-white ${
+                      row.isMono ? "font-mono font-semibold" : ""
+                    }`}
                   >
                     {row.value}
                   </span>
@@ -138,4 +148,3 @@ export function ForestTable({ result }: ForestTableProps) {
 }
 
 export default ForestTable;
-

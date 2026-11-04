@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAnalysis } from "@/context/AnalysisContext";
+import {
+  useAnalysis } from "@/context/AnalysisContext";
 import { DroneUploader } from "./DroneUploader";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  TreePine,
   Leaf,
   MapPin,
   X,
@@ -78,7 +80,7 @@ export function AnalysisPanel() {
   };
 
   return (
-    <div className="w-full md:w-[40%] h-full flex flex-col bg-white border-l border-gray-200 overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-white/95 backdrop-blur-xl border border-gray-100 overflow-hidden rounded-3xl shadow-2xl">
       {/* Header */}
       <div className="p-6 border-b border-gray-200/80 bg-white sticky top-0 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -159,6 +161,17 @@ export function AnalysisPanel() {
                 <span className="text-gray-400">Bounding Box:</span>
                 <span className="font-mono text-gray-600 truncate max-w-[200px]">
                   {bboxText}
+                </span>
+              </div>
+
+              {/* Forest Type Display */}
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <TreePine className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="text-xs font-bold text-gray-700">Forest Type:</span>
+                </div>
+                <span className="text-xs font-semibold text-emerald-800 bg-white/80 px-2.5 py-0.5 rounded-full border border-emerald-200 truncate max-w-[180px]">
+                  {state.polygon?.properties?.forest_type || "Tropical Wet Evergreen Rainforest"}
                 </span>
               </div>
 

@@ -14,13 +14,13 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-gray-900 text-gray-300 border-t border-gray-800">
+    <footer className="bg-[#041407]/95 backdrop-blur-2xl text-gray-300 border-t border-white/10 relative z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Column 1: Brand & Mission */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="p-1.5 rounded-lg bg-green-900/60 text-green-400 border border-green-700/50">
+              <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-400/30">
                 <TreePine className="h-6 w-6" />
               </div>
               <span className="font-bold text-xl text-white tracking-tight">

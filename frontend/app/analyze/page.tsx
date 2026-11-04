@@ -28,7 +28,7 @@ export default function AnalyzePage() {
           <button
             type="button"
             onClick={() => setPanelOpen(!panelOpen)}
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-white/95 hover:bg-white text-gray-800 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 text-xs font-bold transition-all hover:scale-105"
+            className="flex items-center gap-2 px-4 py-2.5 glass-panel-dark hover:bg-black/80 text-white rounded-2xl shadow-2xl border border-white/20 text-xs font-bold transition-all hover:scale-105 active:scale-95"
           >
             {panelOpen ? (
               <>
@@ -37,7 +37,7 @@ export default function AnalyzePage() {
               </>
             ) : (
               <>
-                <SlidersHorizontal className="w-4 h-4 text-green-700" />
+                <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
                 <span>Sensor Parameters</span>
                 {state.polygon && (
                   <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
@@ -49,7 +49,7 @@ export default function AnalyzePage() {
 
         {/* Sliding Side Panel for Analysis Parameters & Drone Upload */}
         {panelOpen && (
-          <div className="absolute top-16 right-4 bottom-6 w-96 max-w-[calc(100vw-2rem)] z-30 overflow-y-auto rounded-3xl shadow-2xl animate-in slide-in-from-right-4 duration-200">
+          <div className="absolute top-16 right-4 bottom-6 w-96 max-w-[calc(100vw-2rem)] z-30 overflow-y-auto rounded-3xl shadow-2xl border border-white/20 glass-panel-dark animate-in slide-in-from-right-4 duration-200">
             <AnalysisPanel />
           </div>
         )}

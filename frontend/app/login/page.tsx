@@ -3,7 +3,19 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { TreePine, Lock, Mail, User as UserIcon, ArrowRight, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import {
+  TreePine,
+  Lock,
+  Mail,
+  User as UserIcon,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  ShieldCheck,
+  Globe2,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,59 +90,89 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 selection:bg-green-500 selection:text-white">
-      {/* High-resolution Forest Background with Overlay */}
+    <div className="relative min-h-screen flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white overflow-hidden">
+      {/* 1. Deep Wild Jungle / Dense Rainforest Wallpaper (Vivid & Present) */}
       <div
-        className="absolute inset-0 bg-cover bg-center z-0"
+        className="absolute inset-0 bg-cover bg-center select-none will-change-transform animate-canopy-breathe"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=2000&q=80')`,
+          backgroundImage: `url('/images/jungle-dense.jpg')`,
+          transformOrigin: "center center",
         }}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
+      />
+
+      {/* 2. Soft Atmospheric Sunburst & Light Jungle Overlay (Never blacked out) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/55 pointer-events-none" />
+
+      {/* 3. Ambient Living Sunbeams & Emerald Aura */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-b from-emerald-400/20 via-green-500/10 to-transparent blur-3xl rounded-full" />
+        <div className="absolute -top-32 left-1/4 w-40 h-[120vh] -rotate-[22deg] bg-gradient-to-b from-white/15 via-emerald-300/10 to-transparent blur-2xl animate-light-ray-drift" />
+        <div className="absolute -top-32 right-1/4 w-48 h-[120vh] -rotate-[18deg] bg-gradient-to-b from-amber-200/15 via-white/5 to-transparent blur-3xl animate-light-ray-drift" />
       </div>
 
-      {/* Top Left Navigation Link */}
-      <div className="absolute top-6 left-6 z-20">
+      {/* 4. Top-Left Floating Crystal Glass Navigation Pill */}
+      <div className="absolute top-6 left-6 z-30">
         <Link
           href="/"
-          className="flex items-center gap-2 text-white/90 hover:text-white transition-colors group"
+          className="crystal-glass px-4 py-2 rounded-2xl flex items-center gap-2.5 text-white hover:text-emerald-300 transition-all shadow-xl group hover:scale-105 active:scale-95"
         >
-          <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-md group-hover:bg-white/30 transition-colors">
-            <TreePine className="h-5 w-5 text-green-400" />
+          <div className="p-1.5 rounded-xl bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 group-hover:scale-110 transition-transform shadow-inner">
+            <TreePine className="h-4 w-4 text-emerald-300" />
           </div>
-          <span className="font-bold text-lg tracking-tight">CanopyAI</span>
+          <span className="font-bold text-sm tracking-tight font-sans drop-shadow-sm">CanopyAI</span>
         </Link>
       </div>
 
-      {/* Centered Auth Card */}
-      <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 my-8">
-        {/* Card Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex p-3 rounded-2xl bg-green-50 text-forest mb-3 border border-green-100 shadow-xs">
-            <TreePine className="h-8 w-8 text-[#1B5E20]" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            {mode === "signin" ? "Welcome to CanopyAI" : "Create Your Account"}
+      {/* 5. Ultra-Transparent Liquid Crystal Glass Card (Jungle visible through glass) */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-md crystal-glass-card text-white rounded-3xl p-8 sm:p-10 my-8 overflow-hidden"
+      >
+        {/* Specular Top Reflection Highlight */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+
+        {/* Card Header with Glowing Jungle Beacon */}
+        <div className="text-center mb-7 space-y-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: 6 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="inline-flex p-3 rounded-2xl bg-emerald-500/25 border border-emerald-400/50 text-emerald-300 shadow-xl relative"
+          >
+            <TreePine className="h-8 w-8 text-emerald-300 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 shadow-lg" />
+            </span>
+          </motion.div>
+
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
+            {mode === "signin" ? (
+              <span>Jungle AI Portal</span>
+            ) : (
+              <span>Create Your Account</span>
+            )}
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-200/90 leading-relaxed max-w-xs mx-auto drop-shadow-xs">
             {mode === "signin"
-              ? "Sign in to access your forest plots, MRV audits, and biomass analytics."
-              : "Start monitoring forest carbon and calculating spaceborne biomass today."}
+              ? "Access planetary forest plots, IPCC Tier-3 biomass analytics, and verified MRV audit dossiers."
+              : "Join global conservation trusts calculating spaceborne biomass across wild tropical jungles."}
           </p>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+        {/* Liquid Crystal Glass Mode Switcher */}
+        <div className="flex crystal-glass p-1.5 rounded-2xl mb-6">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setErrorMessage(null);
             }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               mode === "signin"
-                ? "bg-white text-gray-900 shadow-xs"
-                : "text-gray-500 hover:text-gray-900"
+                ? "crystal-glass-btn text-white"
+                : "text-gray-300 hover:text-white"
             }`}
           >
             Sign In
@@ -141,10 +183,10 @@ function LoginForm() {
               setMode("signup");
               setErrorMessage(null);
             }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               mode === "signup"
-                ? "bg-white text-gray-900 shadow-xs"
-                : "text-gray-500 hover:text-gray-900"
+                ? "crystal-glass-btn text-white"
+                : "text-gray-300 hover:text-white"
             }`}
           >
             Create Account
@@ -152,18 +194,27 @@ function LoginForm() {
         </div>
 
         {/* Error Alert */}
-        {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {errorMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="mb-5 p-3.5 rounded-2xl bg-red-500/25 border border-red-500/50 text-red-200 text-xs flex items-center gap-2.5 backdrop-blur-md shadow-lg"
+            >
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{errorMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Form */}
+        {/* Authentication Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
             <div className="space-y-1.5">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName" className="text-xs font-bold text-emerald-300 drop-shadow-xs">
+                Full Name &amp; Title
+              </Label>
               <div className="relative">
                 <Input
                   id="fullName"
@@ -171,38 +222,42 @@ function LoginForm() {
                   placeholder="Dr. Elena Rostova"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="pl-9"
+                  className="pl-10 h-11 crystal-glass-input rounded-2xl placeholder:text-gray-400 text-xs sm:text-sm font-medium"
                   required={mode === "signup"}
                 />
-                <UserIcon className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+                <UserIcon className="w-4 h-4 text-emerald-400 absolute left-3.5 top-3.5 pointer-events-none" />
               </div>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">Work Email</Label>
+            <Label htmlFor="email" className="text-xs font-bold text-emerald-300 drop-shadow-xs">
+              Work Email
+            </Label>
             <div className="relative">
               <Input
                 id="email"
                 type="email"
-                placeholder="name@organization.earth"
+                placeholder="elena.rostova@canopyai.earth"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-11 crystal-glass-input rounded-2xl placeholder:text-gray-400 text-xs sm:text-sm font-medium"
                 required
               />
-              <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+              <Mail className="w-4 h-4 text-emerald-400 absolute left-3.5 top-3.5 pointer-events-none" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-xs font-bold text-emerald-300 drop-shadow-xs">
+                Password
+              </Label>
               {mode === "signin" && (
                 <button
                   type="button"
-                  onClick={() => alert("Password reset link sent to registered email.")}
-                  className="text-[11px] text-green-700 hover:underline font-medium"
+                  onClick={() => alert("Password reset link dispatched to your registered email.")}
+                  className="text-[11px] text-emerald-300 hover:text-emerald-200 hover:underline font-medium transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -215,26 +270,26 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-11 crystal-glass-input rounded-2xl placeholder:text-gray-400 text-xs sm:text-sm font-medium"
                 required
               />
-              <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+              <Lock className="w-4 h-4 text-emerald-400 absolute left-3.5 top-3.5 pointer-events-none" />
             </div>
           </div>
 
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-xl shadow-md transition-all gap-2"
+            className="w-full crystal-glass-btn text-white font-black h-12 rounded-2xl shadow-2xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] gap-2 mt-2 text-sm tracking-wide"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Authenticating...</span>
+                <span>Connecting to Satellite Network...</span>
               </>
             ) : (
               <>
-                <span>{mode === "signin" ? "Sign In" : "Get Started"}</span>
+                <span>{mode === "signin" ? "Sign In to CanopyAI" : "Launch Carbon Workspace"}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -244,20 +299,22 @@ function LoginForm() {
         {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
+            <div className="w-full border-t border-white/20" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-gray-400 font-medium">Or continue with</span>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-mono">
+            <span className="crystal-glass px-3.5 py-0.5 text-gray-300 rounded-full">
+              Or continue with
+            </span>
           </div>
         </div>
 
-        {/* Social Google Login Button */}
-        <div className="space-y-2.5">
+        {/* Social Google & Instant Demo Buttons */}
+        <div className="space-y-3">
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-xl bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors shadow-xs"
+            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 crystal-glass text-white text-xs font-bold hover:bg-white/15 transition-all shadow-lg hover:scale-[1.01] active:scale-[0.98] rounded-2xl"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -280,23 +337,24 @@ function LoginForm() {
             <span>Continue with Google</span>
           </button>
 
-          {/* Quick Demo One-Click Login */}
+          {/* Instant Demo Session */}
           <button
             type="button"
             onClick={handleDemoSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-green-200 bg-green-50 text-green-800 rounded-xl text-xs font-semibold hover:bg-green-100 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/20 text-emerald-200 text-xs font-bold hover:bg-emerald-500/30 transition-all shadow-inner hover:scale-[1.01] active:scale-[0.98] backdrop-blur-xl"
           >
-            <Sparkles className="w-3.5 h-3.5 text-green-600" />
-            <span>Instant Demo Login (Dr. Elena Rostova)</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Instant Demo Session (Dr. Elena Rostova)</span>
           </button>
         </div>
 
-        {/* Footer Note */}
-        <p className="text-[11px] text-gray-400 text-center mt-6">
-          By signing in, you agree to our Terms of Service and Privacy Policy. All remote sensing datasets adhere to open science guidelines.
-        </p>
-      </div>
+        {/* Security Compliance Footer */}
+        <div className="pt-6 border-t border-white/15 mt-6 flex items-center justify-center gap-2 text-[11px] text-gray-300 font-mono">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>SOC-2 &amp; GDPR Compliant • Verra VCS MRV</span>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -305,8 +363,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+        <div className="min-h-screen flex items-center justify-center bg-[#05180A] text-white">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
         </div>
       }
     >
