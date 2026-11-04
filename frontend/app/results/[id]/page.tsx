@@ -15,6 +15,7 @@ import { NdviChart } from "@/components/results/NdviChart";
 import { Methodology } from "@/components/results/Methodology";
 import { SpaceborneTelemetry } from "@/components/results/SpaceborneTelemetry";
 import { ExportReportButton } from "@/components/results/ExportReportButton";
+import { AiEcologicalSummary } from "@/components/results/AiEcologicalSummary";
 import {
   TreePine,
   Download,
@@ -249,6 +250,11 @@ export default function ResultsPage() {
             </span>
           </div>
           <ResultsMap polygon={polygon} />
+        </div>
+
+        {/* Gemini 3.8 Flash AI Ecological Audit & Interactive Q&A */}
+        <div>
+          <AiEcologicalSummary result={result} />
         </div>
 
         {/* Spaceborne Multi-Sensor Telemetry & Heterogeneous Stratification */}

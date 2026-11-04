@@ -92,6 +92,12 @@ class Settings(BaseSettings):
         description="Optional Sentry DSN for production exception and APM monitoring",
     )
 
+    # Google Gemini AI configuration
+    gemini_api_key: Optional[str] = Field(
+        default=None,
+        description="Google Gemini API key for AI ecological narrative and conversational analysis",
+    )
+
     # External services: Supabase
     supabase_url: Optional[str] = Field(default=None, description="Supabase project URL")
     supabase_service_key: Optional[str] = Field(default=None, description="Supabase service role key (backend-only)")

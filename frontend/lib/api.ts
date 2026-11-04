@@ -170,5 +170,35 @@ export const api = {
     }
     return res.json();
   },
+
+  // Generate Gemini AI ecological audit narrative
+  async getAiNarrative(analysisData: any) {
+    const res = await fetch(`${getApiBaseUrl()}/api/ai/narrative`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analysis_data: analysisData }),
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to generate AI narrative: ${res.statusText}`);
+    }
+    return res.json();
+  },
+
+  // Conversational Q&A with Gemini 3.8 Flash about this forest
+  async chatWithForest(analysisData: any, question: string, previousInteractionId?: string) {
+    const res = await fetch(`${getApiBaseUrl()}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        analysis_data: analysisData,
+        question,
+        previous_interaction_id: previousInteractionId,
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`AI chat failed: ${res.statusText}`);
+    }
+    return res.json();
+  },
 };
 

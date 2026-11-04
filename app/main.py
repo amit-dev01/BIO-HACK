@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api import analysis, health, reports
+from app.api import ai, analysis, health, reports
 from app.config import get_settings
 from app.utils.errors import (
     CanopyAIException,
@@ -179,6 +179,7 @@ def create_app() -> FastAPI:
     api_router.include_router(health.router)
     api_router.include_router(analysis.router)
     api_router.include_router(reports.router)
+    api_router.include_router(ai.router)
 
     app.include_router(api_router)
 
