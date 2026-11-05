@@ -1,20 +1,22 @@
 """Gemini AI service for ecological narrative generation and interactive forest Q&A.
 
-Uses the official google-genai SDK (v2+) with the current gemini-3.8-flash model.
+Uses the official google-genai SDK (v2+) with gemini-3.8-flash and automatic fallback.
 """
 
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import get_settings
 
 logger = logging.getLogger("canopyai.services.gemini")
 
+CANDIDATE_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash"]
+
 
 class GeminiService:
-    """Service orchestrating Google Gemini 3.8 Flash for forest carbon intelligence."""
+    """Service orchestrating Google Gemini for forest carbon intelligence."""
 
     def __init__(self) -> None:
         self.settings = get_settings()
@@ -38,8 +40,24 @@ class GeminiService:
             logger.warning("Could not initialize google-genai client: %s", exc)
             return None
 
+    def _create_interaction(self, client: Any, **kwargs) -> Tuple[Any, str]:
+        """Call interactions.create with model cascading (gemini-3.8-flash -> gemini-3.5-flash)."""
+        last_exc = None
+        for model_name in CANDIDATE_MODELS:
+            try:
+                call_kwargs = dict(kwargs)
+                call_kwargs["model"] = model_name
+                interaction = client.interactions.create(**call_kwargs)
+                return interaction, model_name
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                logger.warning("Interactions API model %s failed: %s; trying fallback model...", model_name, exc)
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("No model candidates available")
+
     def generate_ecological_narrative(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a structured, audit-ready ecological executive narrative using gemini-3.8-flash."""
+        """Generate a structured, audit-ready ecological executive narrative using Gemini."""
         client = self._get_client()
 
         # Build grounding context from satellite telemetry
@@ -82,7 +100,7 @@ class GeminiService:
                     f"Verified spaceborne canopy height: {canopy_height:.1f}m",
                     f"Audit confidence: {conf_score}/100 ({conf_label})",
                 ],
-                "notice": "Set GEMINI_API_KEY in .env to activate real-time Gemini 3.8 Flash narrative generation.",
+                "notice": "Set GEMINI_API_KEY in .env to activate real-time Gemini Flash narrative generation.",
             }
 
         prompt = f"""You are a senior forest carbon MRV auditor evaluating spaceborne telemetry for carbon credit certification.
@@ -106,10 +124,7 @@ Provide an authoritative, rigorous carbon audit narrative. Return ONLY valid JSO
 }}
 """
         try:
-            interaction = client.interactions.create(
-                model="gemini-3.8-flash",
-                input=prompt,
-            )
+            interaction, used_model = self._create_interaction(client, input=prompt)
             raw_text = interaction.output_text or ""
             cleaned = raw_text.strip()
             if cleaned.startswith("```json"):
@@ -122,13 +137,13 @@ Provide an authoritative, rigorous carbon audit narrative. Return ONLY valid JSO
 
             parsed = json.loads(cleaned)
             parsed["configured"] = True
-            parsed["model"] = "gemini-3.8-flash"
+            parsed["model"] = used_model
             return parsed
         except Exception as exc:  # noqa: BLE001
             logger.error("Gemini narrative generation failed: %s", exc)
             return {
                 "configured": True,
-                "model": "gemini-3.8-flash (error fallback)",
+                "model": "gemini-fallback",
                 "executive_summary": f"Telemetry indicates {total_co2e:,.0f} tCO₂e stored across {area_ha:,.1f} ha.",
                 "permanence_and_risk": "Vegetation metrics show robust canopy cover.",
                 "registry_compliance": f"Aligned with {recommended_std}.",
@@ -170,17 +185,17 @@ Provide an authoritative, rigorous carbon audit narrative. Return ONLY valid JSO
 
         try:
             kwargs: Dict[str, Any] = {
-                "model": "gemini-3.8-flash",
                 "input": context_prompt if not previous_interaction_id else user_message,
             }
             if previous_interaction_id:
                 kwargs["previous_interaction_id"] = previous_interaction_id
 
-            interaction = client.interactions.create(**kwargs)
+            interaction, used_model = self._create_interaction(client, **kwargs)
             return {
                 "reply": interaction.output_text or "No response generated.",
                 "interaction_id": interaction.id,
                 "configured": True,
+                "model": used_model,
             }
         except Exception as exc:  # noqa: BLE001
             logger.error("Gemini chat interaction failed: %s", exc)
@@ -193,4 +208,3 @@ Provide an authoritative, rigorous carbon audit narrative. Return ONLY valid JSO
 
 
 gemini_service = GeminiService()
-

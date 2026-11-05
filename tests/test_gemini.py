@@ -23,18 +23,20 @@ SAMPLE_TELEMETRY = {
 
 def test_gemini_narrative_without_api_key():
     """Verify that without API key, service gracefully returns baseline narrative."""
-    narrative = gemini_service.generate_ecological_narrative(SAMPLE_TELEMETRY)
-    assert "executive_summary" in narrative
-    assert "permanence_and_risk" in narrative
-    assert "registry_compliance" in narrative
-    assert "1,500.0" in narrative["executive_summary"]
+    with patch.object(gemini_service, "_get_client", return_value=None):
+        narrative = gemini_service.generate_ecological_narrative(SAMPLE_TELEMETRY)
+        assert "executive_summary" in narrative
+        assert "permanence_and_risk" in narrative
+        assert "registry_compliance" in narrative
+        assert "1,500.0" in narrative["executive_summary"]
 
 
 def test_gemini_chat_without_api_key():
     """Verify chat endpoint returns clear guidance when API key is unconfigured."""
-    chat_resp = gemini_service.chat_with_forest(SAMPLE_TELEMETRY, "How much carbon is stored?")
-    assert "reply" in chat_resp
-    assert chat_resp["configured"] is False
+    with patch.object(gemini_service, "_get_client", return_value=None):
+        chat_resp = gemini_service.chat_with_forest(SAMPLE_TELEMETRY, "How much carbon is stored?")
+        assert "reply" in chat_resp
+        assert chat_resp["configured"] is False
 
 
 def test_ai_narrative_endpoint():
