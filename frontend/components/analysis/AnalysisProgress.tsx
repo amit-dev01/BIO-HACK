@@ -99,9 +99,8 @@ export function AnalysisProgress() {
       setShowShockwave(true);
       setShowConfetti(true);
 
-      const targetId = results?.analysis_id || "cai_anlz_demo";
       const timer = setTimeout(() => {
-        router.push(`/results/${targetId}`);
+        router.push("/results");
       }, 850);
       return () => clearTimeout(timer);
     }

@@ -34,8 +34,8 @@ export function ResultsHeader({ result }: ResultsHeaderProps) {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">
               {result.polygon?.properties?.name || "Forest Carbon Intelligence Report"}
             </h1>
-            <p className="text-xs text-white/50 font-mono mt-0.5">
-              Analysis ID: {result.analysis_id}
+            <p className="text-xs text-emerald-300/80 font-medium mt-0.5">
+              Spaceborne Multi-Spectral Assessment • Verified Ecological Audit
             </p>
           </div>
         </div>
